@@ -26,7 +26,7 @@ export default function Embed() {
       <style>{`
         .assistant-shell {
           width: 70vw;
-          height: 70vh;
+          height: 75vh; /* larger so internal content doesn't scroll */
           max-width: 1180px;
           max-height: 900px;
           border-radius: 18px;
@@ -38,13 +38,13 @@ export default function Embed() {
         }
 
         @media (max-width: 1024px) {
-          .assistant-shell { width: 90vw; height: 80vh; }
+          .assistant-shell { width: 88vw; height: 82vh; }
         }
 
         @media (max-width: 640px) {
           .assistant-shell {
-            width: 95vw;
-            height: 95vh;
+            width: 96vw;
+            height: 96vh;
             border-radius: 12px;
             max-width: 100%;
             max-height: 100%;
@@ -60,7 +60,8 @@ export default function Embed() {
           border-bottom: 1px solid rgba(10,20,40,0.03);
         }
 
-        .assistant-body { flex: 1; overflow: auto; }
+        /* important: allow ChatAssistant to layout with flex (no forced inner scrolling) */
+        .assistant-body { flex: 1; display: flex; flex-direction: column; overflow: visible; }
       `}</style>
 
       <div className="assistant-shell" role="dialog" aria-modal="true">
@@ -70,6 +71,7 @@ export default function Embed() {
           </div>
           <div>
             <button onClick={postClose} style={{ background: "transparent", border: "none", fontSize: 22, cursor: "pointer" }} aria-label="Close">
+              {/* Feather-style close */}
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path d="M18 6L6 18" stroke="#374151" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M6 6l12 12" stroke="#374151" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
