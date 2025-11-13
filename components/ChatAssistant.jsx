@@ -2,10 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant (corrected)
- * - scroll area is inside modal body and scrolls
- * - footer is absolutely positioned inside modal body (so it stays inside modal)
- * - footer does NOT use fixed position—no leakage outside modal
+ * ChatAssistant – corrected behavior
+ * - Assumes modal header exists (pages/embed.js) with fixed height
+ * - Chat scroll area fills assistant-body height, and footer is absolute inside assistant-body
+ * - No position: fixed used; footer cannot leak outside modal
  */
 
 const BRAND = {
@@ -15,7 +15,7 @@ const BRAND = {
   text: "#061425",
   muted: "#6b7280",
   radius: 18,
-  footerHeight: 110
+  footerHeightPx: 110
 };
 
 const SUGGESTIONS = [
@@ -39,7 +39,6 @@ function findFaq(text) {
   return null;
 }
 
-/* Small inline icons (fallback) */
 function IconMic({ stroke = BRAND.blue, size = 22 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -58,7 +57,6 @@ function IconSend({ stroke = "#fff", size = 18 }) {
   );
 }
 
-/* simple grouping function same as earlier */
 function groupMessages(msgs) {
   if (!msgs || msgs.length === 0) return [];
   const groups = [];
@@ -86,7 +84,6 @@ export default function ChatAssistant({ projects = [] }) {
   const scrollRef = useRef(null);
   const recRef = useRef(null);
 
-  // speech recognition
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
@@ -102,7 +99,6 @@ export default function ChatAssistant({ projects = [] }) {
     recRef.current = r;
   }, []);
 
-  // auto scroll to bottom on message change
   useEffect(() => {
     if (!scrollRef.current) return;
     setTimeout(() => {
@@ -110,9 +106,7 @@ export default function ChatAssistant({ projects = [] }) {
     }, 40);
   }, [messages]);
 
-  function addMessage(msg) {
-    setMessages(prev => [...prev, msg]);
-  }
+  function addMessage(msg) { setMessages(prev => [...prev, msg]); }
   function speak(text) {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
@@ -159,22 +153,21 @@ export default function ChatAssistant({ projects = [] }) {
   /* styles */
   const styles = {
     container: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)" },
-    // THIS is the scrollable area inside the modal body
+
+    // scroll area must fill the entire assistant-body (whose height is calc in embed.js)
     scrollArea: {
-      flex: 1,
+      height: "100%",
       overflowY: "auto",
       padding: 32,
-      paddingBottom: BRAND.footerHeight + 32 // reserve for footer inside modal
+      paddingBottom: BRAND.footerHeightPx + 32 // reserve for footer
     },
-    heroWrap: { textAlign: "center", marginBottom: 20 },
-    orb: { width: 86, height: 86, borderRadius: 18, margin: "0 auto 18px", display: "grid", placeItems: "center", background: `linear-gradient(135deg, rgba(15,128,217,0.08), rgba(15,128,217,0.02))`, boxShadow: "0 12px 36px rgba(15,128,217,0.06)" },
-    title: { margin: 0, fontFamily: "var(--font-heading)", color: BRAND.blue, fontSize: 44, lineHeight: 1.02, fontWeight: 700 },
-    subtitle: { marginTop: 10, color: BRAND.muted, fontSize: 15 },
+
     messagesWrap: { display: "flex", flexDirection: "column", gap: 12 },
+
     groupLeft: { alignSelf: "flex-start", background: "#f7fbff", color: BRAND.text, padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 6px 18px rgba(10,20,40,0.03)" },
     groupRight: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 8px 24px rgba(15,128,217,0.12)" },
 
-    // Footer is positioned ABSOLUTE inside the modal body (not fixed)
+    // footer absolute INSIDE modal body
     footerOuter: {
       position: "absolute",
       left: 0,
@@ -182,7 +175,7 @@ export default function ChatAssistant({ projects = [] }) {
       bottom: 0,
       display: "flex",
       justifyContent: "center",
-      padding: "16px 0 26px" // some bottom breathing within the modal
+      padding: "16px 0 26px"
     },
     footerBox: { width: "92%", maxWidth: 1180, background: "#fff", borderRadius: 14, boxShadow: "0 -20px 60px rgba(2,6,23,0.06)", padding: "14px 20px" },
     suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 },
@@ -195,16 +188,12 @@ export default function ChatAssistant({ projects = [] }) {
 
   return (
     <div style={styles.container}>
-      {/* scrollable chat area inside modal */}
+      {/* scroll area now fills the assistant-body height */}
       <div ref={scrollRef} style={styles.scrollArea} aria-live="polite">
-        {/* hero only initially */}
-        {messages.length <= 2 && (
-          <div style={styles.heroWrap}>
-            <div style={styles.orb}><div style={{ width: 48, height: 48, borderRadius: 10, background: `linear-gradient(145deg, ${BRAND.blue}, #a6d9ff)` }} /></div>
-            <h1 style={styles.title}>Hey there! Can I help you with anything?</h1>
-            <div style={styles.subtitle}>Ready to assist you with anything you need.</div>
-          </div>
-        )}
+        {/* NOTE: the "hero" large heading is intentionally not rendered here;
+            the modal header (pages/embed.js) contains the visible brand header.
+            We keep here just the messages. */}
+        <div style={{ height: 6 }} />
 
         <div style={styles.messagesWrap}>
           {groups.map((g, gi) => {
@@ -213,9 +202,7 @@ export default function ChatAssistant({ projects = [] }) {
               <div key={gi} style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start" }}>
                 <div style={isUser ? styles.groupRight : styles.groupLeft}>
                   {g.texts.map((t, ti) => (
-                    <div key={ti} style={{ marginBottom: ti < g.texts.length - 1 ? 8 : 0 }}>
-                      {t}
-                    </div>
+                    <div key={ti} style={{ marginBottom: ti < g.texts.length - 1 ? 8 : 0 }}>{t}</div>
                   ))}
                 </div>
               </div>
@@ -224,7 +211,7 @@ export default function ChatAssistant({ projects = [] }) {
         </div>
       </div>
 
-      {/* footer ABSOLUTE inside modal (so it stays inside shell) */}
+      {/* Footer absolute INSIDE modal body */}
       <div style={styles.footerOuter} aria-hidden={false}>
         <div style={styles.footerBox}>
           {showSuggestions && (
