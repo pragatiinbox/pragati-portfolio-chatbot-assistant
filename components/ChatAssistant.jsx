@@ -1,14 +1,12 @@
 // components/ChatAssistant.jsx
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant — stable layout:
- * - modal (parent) should be a flex column (already done in pages/embed.js)
- * - middle area (hero + messages) is the only scrollable area (flex:1; overflow:auto)
- * - footer is a normal flex child placed AFTER the scroll area: it remains pinned to modal bottom
- * - footer has paddingGap = 24px from modal bottom and is full-width (centered box)
+ * ChatAssistant — measured footer reserve version
+ * - ensures the scrollable middle area has padding-bottom = footerHeight + footerGap (24px)
+ * - footer remains pinned to bottom as a flex child (end-to-end visual box inside modal)
  *
- * Replace your existing file with this exact code.
+ * Overwrite your existing component with this exact file.
  */
 
 const BRAND = {
@@ -60,15 +58,16 @@ function groupMessages(msgs) {
 }
 
 export default function ChatAssistant() {
-  // messages start empty so hero is visible and will scroll with messages
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(true);
+
   const middleRef = useRef(null);
+  const footerRef = useRef(null);
   const recRef = useRef(null);
 
+  // speech recognition optional (keeps previous behavior)
   useEffect(() => {
-    // optional speech recognition init
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
     const r = new SR();
@@ -83,12 +82,35 @@ export default function ChatAssistant() {
     recRef.current = r;
   }, []);
 
+  // ensure scroll area reserves space equal to footer height + gap
+  const measureAndReserve = () => {
+    if (!middleRef.current || !footerRef.current) return;
+    const footerHeight = footerRef.current.offsetHeight || 0;
+    const gap = BRAND.footerGap;
+    // Set paddingBottom on the scroll container
+    middleRef.current.style.paddingBottom = `${footerHeight + gap}px`;
+  };
+
+  // run measurement on mount and whenever footer size changes or window resizes
+  useLayoutEffect(() => {
+    measureAndReserve();
+    const ro = new ResizeObserver(() => {
+      measureAndReserve();
+    });
+    if (footerRef.current) ro.observe(footerRef.current);
+    window.addEventListener("resize", measureAndReserve);
+    return () => {
+      window.removeEventListener("resize", measureAndReserve);
+      try { ro.disconnect(); } catch (e) {}
+    };
+  }, []);
+
+  // auto-scroll to bottom when messages change
   useEffect(() => {
-    // auto-scroll to bottom when new messages appear
     if (!middleRef.current) return;
     setTimeout(() => {
       middleRef.current.scrollTop = middleRef.current.scrollHeight;
-    }, 30);
+    }, 40);
   }, [messages]);
 
   function addMessage(m) { setMessages(prev => [...prev, m]); }
@@ -96,7 +118,7 @@ export default function ChatAssistant() {
   function handleSuggestion(s) {
     setShowSuggestions(false);
     addMessage({ role: "user", text: s.text });
-    // demo assistant replies (replace with real logic)
+    // demo responses:
     if (s.key === "mobile") {
       addMessage({ role: "assistant", text: `My top mobile project: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout` });
       return;
@@ -109,14 +131,12 @@ export default function ChatAssistant() {
       addMessage({ role: "assistant", text: "Figma, Protopie, FigJam, Notion, Maze — chosen per stage." });
       return;
     }
-    addMessage({ role: "assistant", text: "Pragati is a Product Designer building thoughtful, scalable product experiences." });
+    addMessage({ role: "assistant", text: "Pragati is a Product Designer creating thoughtful, scalable product experiences." });
   }
 
   function toggleMic() {
     if (!recRef.current) return alert("Speech recognition not supported in this browser.");
-    try {
-      recRef.current.start();
-    } catch (e) {}
+    try { recRef.current.start(); } catch (e) {}
   }
 
   function onSubmit(e) {
@@ -130,11 +150,11 @@ export default function ChatAssistant() {
 
   const groups = groupMessages(messages);
 
-  // styles (kept inline for easy copy/paste)
+  // inline styles for copy/paste simplicity
   const styles = {
-    shell: { height: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", background: "#fbfeff" },
+    shell: { height: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", background: "#fbfeff", fontFamily: "var(--font-body)" },
 
-    // MIDDLE: scrollable only area (hero + messages) - flex:1 so footer stays at bottom
+    // middle = scrollable area with hero + messages
     middle: {
       flex: 1,
       overflowY: "auto",
@@ -153,12 +173,8 @@ export default function ChatAssistant() {
     leftBubble: { alignSelf: "flex-start", background: "#f7fbff", color: "#061425", padding: "12px 16px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 14px 30px rgba(10,20,40,0.04)", boxSizing: "border-box" },
     rightBubble: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "12px 16px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 12px 30px rgba(15,128,217,0.14)", boxSizing: "border-box" },
 
-    // FOOTER: outside middle, as a flex child (keeps it pinned to bottom)
-    footerShell: {
-      padding: BRAND.footerGap,
-      boxSizing: "border-box",
-      background: "transparent"
-    },
+    // footer placed AFTER middle (so it stays pinned to bottom)
+    footerShell: { padding: BRAND.footerGap, boxSizing: "border-box", background: "transparent" },
 
     footerBox: {
       width: "92%",
@@ -226,7 +242,7 @@ export default function ChatAssistant() {
 
   return (
     <div style={styles.shell}>
-      {/* MIDDLE (scrollable): contains hero + messages */}
+      {/* MIDDLE (scrollable) */}
       <div ref={middleRef} style={styles.middle} aria-live="polite">
         <div style={styles.hero}>
           <div style={styles.heroBlob} />
@@ -250,9 +266,9 @@ export default function ChatAssistant() {
         </div>
       </div>
 
-      {/* FOOTER: normal flex child placed AFTER the middle scroll area so it stays pinned to bottom */}
+      {/* FOOTER (pinned to bottom because it's a sibling of the scroll area) */}
       <div style={styles.footerShell}>
-        <div style={styles.footerBox}>
+        <div ref={footerRef} style={styles.footerBox}>
           {showSuggestions && (
             <div style={styles.suggestionsRow}>
               {SUGGESTIONS.map((s, i) => (
