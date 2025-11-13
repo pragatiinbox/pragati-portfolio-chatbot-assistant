@@ -2,10 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant — sticky-footer-inside-scroll-container implementation
- * - messages + footer live inside the same scroll container
- * - footer uses position: sticky; bottom: 0 so it never leaves the modal
- * - fixed input/button sizes and box-sizing to avoid layout shifts
+ * ChatAssistant — stable layout:
+ * - Top hero: fixed height (no duplication)
+ * - Middle messages area: flex:1 and scrollable (only this scrolls)
+ * - Footer: position: sticky inside scroll context with bottom padding (sticky + padded)
+ *
+ * Replace the existing file with this exact code.
  */
 
 const BRAND = {
@@ -15,7 +17,7 @@ const BRAND = {
   text: "#061425",
   muted: "#6b7280",
   radius: 18,
-  footerHeightPx: 110
+  footerPadding: 18 // used for sticky bottom offset
 };
 
 const SUGGESTIONS = [
@@ -39,7 +41,6 @@ function findFaq(text) {
   return null;
 }
 
-/* Small inline icons (fallback) */
 function IconMic({ stroke = BRAND.blue, size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -75,16 +76,15 @@ function groupMessages(msgs) {
 }
 
 export default function ChatAssistant({ projects = [] }) {
-  const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hey there! Can I help you with anything?" },
-    { role: "assistant", text: "Ready to assist you with anything you need." }
-  ]);
+  // start with no messages so the hero only shows once (hero contains greeting)
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
-  const scrollRef = useRef(null); // this is the scroll container ref (contains messages + footer)
+  const middleRef = useRef(null); // scrollable middle region (only this scrolls)
   const recRef = useRef(null);
 
+  // speech recognition init (if supported)
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
@@ -100,12 +100,11 @@ export default function ChatAssistant({ projects = [] }) {
     recRef.current = r;
   }, []);
 
-  // auto-scroll to bottom on message change
+  // auto-scroll middle area to bottom when messages change
   useEffect(() => {
-    if (!scrollRef.current) return;
-    // scroll to bottom of scroll container
+    if (!middleRef.current) return;
     setTimeout(() => {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      middleRef.current.scrollTop = middleRef.current.scrollHeight;
     }, 40);
   }, [messages]);
 
@@ -153,37 +152,50 @@ export default function ChatAssistant({ projects = [] }) {
 
   const groups = groupMessages(messages);
 
-  // styles
+  // layout sizes
+  const HERO_HEIGHT = 160; // px — fixed top hero height
   const styles = {
-    shell: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)", boxSizing: "border-box" },
+    root: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)", boxSizing: "border-box" },
 
-    // IMPORTANT: this is the scroll container that contains both messages AND footer
-    scrollContainer: {
-      height: "100%",
+    // HERO: fixed height, does not scroll
+    hero: {
+      height: HERO_HEIGHT,
+      minHeight: HERO_HEIGHT,
+      padding: "28px 32px",
+      boxSizing: "border-box",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center"
+    },
+    heroTitle: { fontFamily: "var(--font-heading)", color: BRAND.blue, fontSize: 34, margin: 0, lineHeight: 1.02 },
+    heroSubtitle: { marginTop: 8, color: BRAND.muted, fontSize: 15 },
+
+    // MIDDLE: this is the only scrollable area (flex:1)
+    middle: {
+      flex: 1,
       overflowY: "auto",
       padding: 32,
-      paddingBottom: 12,
       boxSizing: "border-box",
       position: "relative",
-      WebkitOverflowScrolling: "touch"
+      // ensure there is some bottom padding so sticky footer has breathing room
+      paddingBottom: `${BRAND.footerPadding + 160}px`
     },
 
-    messagesWrap: { display: "flex", flexDirection: "column", gap: 12, paddingBottom: 24 },
+    messagesWrap: { display: "flex", flexDirection: "column", gap: 18 },
 
-    groupLeft: { alignSelf: "flex-start", background: "#f7fbff", color: BRAND.text, padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 6px 18px rgba(10,20,40,0.03)", boxSizing: "border-box" },
-    groupRight: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 8px 24px rgba(15,128,217,0.12)", boxSizing: "border-box" },
+    leftBubble: { alignSelf: "flex-start", background: "#f7fbff", color: BRAND.text, padding: "12px 16px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 14px 30px rgba(10,20,40,0.04)", boxSizing: "border-box" },
+    rightBubble: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "12px 16px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 12px 30px rgba(15,128,217,0.14)", boxSizing: "border-box" },
 
-    // footer is sticky INSIDE the scroll container
-    footerWrapper: {
+    // FOOTER: sticky inside the middle area, with bottom padding offset
+    footerStickyWrap: {
       position: "sticky",
-      bottom: 0,
+      bottom: BRAND.footerPadding, // padded sticky so it's visually separated from modal bottom
       left: 0,
       right: 0,
-      zIndex: 20,
+      zIndex: 30,
       display: "flex",
       justifyContent: "center",
       paddingTop: 12,
-      paddingBottom: 8,
       boxSizing: "border-box"
     },
 
@@ -200,8 +212,8 @@ export default function ChatAssistant({ projects = [] }) {
       gap: 12
     },
 
-    suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 0 },
-    suggestionBtn: { padding: "10px 14px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", fontSize: 14, boxSizing: "border-box" },
+    suggestionsRow: { display: "flex", gap: 12, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 4 },
+    suggestionBtn: { padding: "10px 14px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", fontSize: 14, whiteSpace: "nowrap", boxSizing: "border-box" },
 
     inputRow: { display: "flex", gap: 12, alignItems: "center", boxSizing: "border-box" },
 
@@ -251,27 +263,32 @@ export default function ChatAssistant({ projects = [] }) {
   };
 
   return (
-    <div style={styles.shell}>
-      {/* scroll container: contains messages + sticky footer */}
-      <div ref={scrollRef} style={styles.scrollContainer} aria-live="polite">
-        {/* initial hero/messages area */}
-        {messages.length <= 2 && (
-          <div style={{ textAlign: "left", marginBottom: 8 }}>
-            <div style={{ display: "inline-block", background: "#f7fbff", padding: "10px 14px", borderRadius: 12, boxShadow: "0 18px 40px rgba(10,20,40,0.04)" }}>
-              <div style={{ fontFamily: "var(--font-body)", color: BRAND.text }}>
-                Hey there! Can I help you with anything?
-                <div style={{ marginTop: 8, color: BRAND.muted, fontSize: 14 }}>Ready to assist you with anything you need.</div>
-              </div>
-            </div>
+    <div style={styles.root}>
+      {/* HERO - fixed and unique (no duplication) */}
+      <div style={styles.hero}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 60, height: 60, borderRadius: 12, background: `linear-gradient(135deg, ${BRAND.blue}, #a6d9ff)`, boxShadow: "0 12px 36px rgba(15,128,217,0.06)" }} />
+          <div>
+            <h2 style={styles.heroTitle}>Hey there! Can I help you with anything?</h2>
+            <div style={styles.heroSubtitle}>Ready to assist you with anything you need.</div>
           </div>
-        )}
+        </div>
+      </div>
 
+      {/* MIDDLE area: only this scrolls (messages + sticky footer inside it) */}
+      <div ref={middleRef} style={styles.middle} aria-live="polite">
+        {/* message list */}
         <div style={styles.messagesWrap}>
+          {groups.length === 0 && (
+            // small visual spacing when there are no chat messages
+            <div style={{ height: 8 }} />
+          )}
+
           {groups.map((g, gi) => {
             const isUser = g.role === "user";
             return (
               <div key={gi} style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start" }}>
-                <div style={isUser ? styles.groupRight : styles.groupLeft}>
+                <div style={isUser ? styles.rightBubble : styles.leftBubble}>
                   {g.texts.map((t, ti) => <div key={ti} style={{ marginBottom: ti < g.texts.length - 1 ? 8 : 0 }}>{t}</div>)}
                 </div>
               </div>
@@ -279,13 +296,13 @@ export default function ChatAssistant({ projects = [] }) {
           })}
         </div>
 
-        {/* STICKY FOOTER inside this scroll container */}
-        <div style={styles.footerWrapper}>
+        {/* STICKY FOOTER (inside middle scroll area) — padded with bottom offset */}
+        <div style={styles.footerStickyWrap}>
           <div style={styles.footerBox}>
             {showSuggestions && (
-              <div style={styles.suggestionsRow}>
+              <div style={styles.suggestionsRow} role="list">
                 {SUGGESTIONS.map((s, i) => (
-                  <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn}>
+                  <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn} role="listitem">
                     <span style={{ marginRight: 8 }}>{s.emoji}</span>
                     <span>{s.text}</span>
                   </button>
