@@ -2,12 +2,6 @@
 import ChatAssistant from "../components/ChatAssistant";
 
 export default function Embed() {
-  const projects = [
-    { id: "p1", title: "Mobile Checkout Redesign", short: "Checkout flow & microinteractions", url: "https://pragatisharma.in/mobile-checkout", type: "mobile" },
-    { id: "p2", title: "B2B Dashboard", short: "Data-heavy dashboard & analytics", url: "https://pragatisharma.in/b2b-dashboard", type: "web" },
-    { id: "p3", title: "Brand Refresh", short: "Visual identity & brand guidelines", url: "https://pragatisharma.in/brand-refresh", type: "brand" }
-  ];
-
   function postClose() {
     if (typeof window !== "undefined" && window.parent) {
       window.parent.postMessage({ type: "close-assistant" }, "*");
@@ -25,7 +19,7 @@ export default function Embed() {
     }}>
       <style>{`
         :root {
-          --assistant-header-h: 84px; /* header height used by body calc */
+          --assistant-header-h: 64px; /* top small bar height (keeps modal controls) */
         }
 
         .assistant-shell {
@@ -59,7 +53,7 @@ export default function Embed() {
         .assistant-header {
           height: var(--assistant-header-h);
           min-height: var(--assistant-header-h);
-          padding: 18px 24px;
+          padding: 12px 20px;
           display:flex;
           justify-content: space-between;
           align-items: center;
@@ -67,11 +61,10 @@ export default function Embed() {
           background: transparent;
         }
 
-        /* assistant-body must be constrained to remaining modal height */
         .assistant-body {
           height: calc(100% - var(--assistant-header-h));
-          display: block; /* body will fully contain the ChatAssistant */
-          position: relative; /* footer inside ChatAssistant will be absolute within this */
+          display: block;
+          position: relative;
         }
       `}</style>
 
@@ -91,7 +84,7 @@ export default function Embed() {
         </div>
 
         <div className="assistant-body">
-          <ChatAssistant projects={projects} />
+          <ChatAssistant />
         </div>
       </div>
     </div>
