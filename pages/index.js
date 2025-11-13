@@ -1,21 +1,12 @@
 // pages/index.js
-import AssistantModal from "../components/AssistantModal";
-
 export default function Home() {
-  // Projects pre-filled with pragatisharma.in links (update later if needed)
-  const projects = [
-    { id: "p1", title: "Mobile Checkout Redesign", short: "Checkout flow & microinteractions", url: "https://pragatisharma.in/mobile-checkout", type: "mobile" },
-    { id: "p2", title: "B2B Dashboard", short: "Data-heavy dashboard & analytics", url: "https://pragatisharma.in/b2b-dashboard", type: "web" },
-    { id: "p3", title: "Brand Refresh", short: "Visual identity & brand guidelines", url: "https://pragatisharma.in/brand-refresh", type: "brand" },
-    { id: "p4", title: "Design System", short: "Reusable components & tokens", url: "https://pragatisharma.in/design-system", type: "system" }
-  ];
-
   return (
-    <main style={{ padding: 24, fontFamily: "system-ui, sans-serif" }}>
-      <h1>Pragati Sharma — Portfolio Assistant Demo</h1>
-      <p>Open the assistant using the floating button at bottom-right.</p>
-
-      <AssistantModal projects={projects} />
+    <main style={{ padding: 28, fontFamily: "var(--font-body)" }}>
+      <h1 style={{ fontFamily: "var(--font-heading)", fontSize: 36 }}>Pragati Sharma — Portfolio Assistant Demo</h1>
+      <p>Open the assistant using your site button — it will call the embed overlay which loads the centered assistant modal.</p>
+      <p style={{ marginTop: 20, color: "#6b7280" }}>
+        NOTE: If you still see a floating assistant at bottom-right, do a hard refresh (Ctrl/Cmd+Shift+R) — older code may be cached.
+      </p>
     </main>
   );
 }
