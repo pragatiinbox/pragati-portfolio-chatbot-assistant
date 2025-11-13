@@ -2,10 +2,11 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant – corrected behavior
- * - Assumes modal header exists (pages/embed.js) with fixed height
- * - Chat scroll area fills assistant-body height, and footer is absolute inside assistant-body
- * - No position: fixed used; footer cannot leak outside modal
+ * ChatAssistant — footer layout stabilized
+ * - fixed input/button heights to avoid layout shifts when focused or when chat grows
+ * - use box-sizing: border-box to make borders/shadows not affect layout size
+ * - use box-shadow for focus visuals (no border width changes)
+ * - footer stays absolute inside modal body, chat scrolls properly
  */
 
 const BRAND = {
@@ -39,7 +40,7 @@ function findFaq(text) {
   return null;
 }
 
-function IconMic({ stroke = BRAND.blue, size = 22 }) {
+function IconMic({ stroke = BRAND.blue, size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       <rect x="7" y="2" width="10" height="14" rx="6" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -48,7 +49,7 @@ function IconMic({ stroke = BRAND.blue, size = 22 }) {
     </svg>
   );
 }
-function IconSend({ stroke = "#fff", size = 18 }) {
+function IconSend({ stroke = "#fff", size = 16 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       <path d="M22 2L11 13" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -150,24 +151,23 @@ export default function ChatAssistant({ projects = [] }) {
 
   const groups = groupMessages(messages);
 
-  /* styles */
+  /* stable footer styles: fixed heights, box-sizing, no border-change on focus */
   const styles = {
-    container: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)" },
+    container: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)", boxSizing: "border-box" },
 
-    // scroll area must fill the entire assistant-body (whose height is calc in embed.js)
     scrollArea: {
       height: "100%",
       overflowY: "auto",
       padding: 32,
-      paddingBottom: BRAND.footerHeightPx + 32 // reserve for footer
+      paddingBottom: BRAND.footerHeightPx + 32,
+      boxSizing: "border-box"
     },
 
     messagesWrap: { display: "flex", flexDirection: "column", gap: 12 },
 
-    groupLeft: { alignSelf: "flex-start", background: "#f7fbff", color: BRAND.text, padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 6px 18px rgba(10,20,40,0.03)" },
-    groupRight: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 8px 24px rgba(15,128,217,0.12)" },
+    groupLeft: { alignSelf: "flex-start", background: "#f7fbff", color: BRAND.text, padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 6px 18px rgba(10,20,40,0.03)", boxSizing: "border-box" },
+    groupRight: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 8px 24px rgba(15,128,217,0.12)", boxSizing: "border-box" },
 
-    // footer absolute INSIDE modal body
     footerOuter: {
       position: "absolute",
       left: 0,
@@ -175,24 +175,82 @@ export default function ChatAssistant({ projects = [] }) {
       bottom: 0,
       display: "flex",
       justifyContent: "center",
-      padding: "16px 0 26px"
+      padding: "18px 0 26px",
+      boxSizing: "border-box"
     },
-    footerBox: { width: "92%", maxWidth: 1180, background: "#fff", borderRadius: 14, boxShadow: "0 -20px 60px rgba(2,6,23,0.06)", padding: "14px 20px" },
-    suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 },
-    suggestionBtn: { padding: "10px 14px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", fontSize: 14 },
-    inputRow: { display: "flex", gap: 12, alignItems: "center" },
-    input: { flex: 1, padding: "14px 18px", borderRadius: 14, border: `1.5px solid ${BRAND.blue}`, fontSize: 15 },
-    micBtn: { padding: 12, borderRadius: 12, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", display: "grid", placeItems: "center" },
-    sendBtn: { padding: "12px 18px", borderRadius: 14, background: BRAND.blue, color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }
+
+    footerBox: {
+      width: "92%",
+      maxWidth: 1180,
+      background: "#fff",
+      borderRadius: 14,
+      boxShadow: "0 -20px 60px rgba(2,6,23,0.06)",
+      padding: "14px 20px",
+      boxSizing: "border-box",
+      display: "flex",
+      flexDirection: "column",
+      gap: 12
+    },
+
+    suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 0 },
+
+    suggestionBtn: { padding: "10px 14px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", fontSize: 14, boxSizing: "border-box" },
+
+    inputRow: { display: "flex", gap: 12, alignItems: "center", boxSizing: "border-box" },
+
+    // FIXED height input and explicit box-sizing — avoids layout change on focus
+    input: {
+      flex: 1,
+      height: 48,
+      padding: "12px 16px",
+      borderRadius: 12,
+      border: `1.5px solid rgba(15,128,217,0.12)`,
+      fontSize: 15,
+      boxSizing: "border-box",
+      outline: "none",
+      background: "#fff",
+      transition: "box-shadow 160ms ease, transform 160ms ease"
+    },
+
+    // mic and send fixed sizes
+    micBtn: {
+      width: 48,
+      height: 48,
+      minWidth: 48,
+      borderRadius: 12,
+      border: `1px solid ${BRAND.softGray}`,
+      background: "#fff",
+      cursor: "pointer",
+      display: "grid",
+      placeItems: "center",
+      boxSizing: "border-box"
+    },
+
+    sendBtn: {
+      minWidth: 92,
+      height: 48,
+      borderRadius: 12,
+      background: BRAND.blue,
+      color: "#fff",
+      border: "none",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "0 16px",
+      boxSizing: "border-box",
+      boxShadow: "0 10px 30px rgba(15,128,217,0.16)"
+    },
+
+    // Focus styles use shadow (no border width change)
+    focusStyle: {
+      boxShadow: `0 0 0 6px rgba(15,128,217,0.06), 0 6px 20px rgba(15,128,217,0.08)`
+    }
   };
 
   return (
     <div style={styles.container}>
-      {/* scroll area now fills the assistant-body height */}
       <div ref={scrollRef} style={styles.scrollArea} aria-live="polite">
-        {/* NOTE: the "hero" large heading is intentionally not rendered here;
-            the modal header (pages/embed.js) contains the visible brand header.
-            We keep here just the messages. */}
         <div style={{ height: 6 }} />
 
         <div style={styles.messagesWrap}>
@@ -201,9 +259,7 @@ export default function ChatAssistant({ projects = [] }) {
             return (
               <div key={gi} style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start" }}>
                 <div style={isUser ? styles.groupRight : styles.groupLeft}>
-                  {g.texts.map((t, ti) => (
-                    <div key={ti} style={{ marginBottom: ti < g.texts.length - 1 ? 8 : 0 }}>{t}</div>
-                  ))}
+                  {g.texts.map((t, ti) => <div key={ti} style={{ marginBottom: ti < g.texts.length - 1 ? 8 : 0 }}>{t}</div>)}
                 </div>
               </div>
             );
@@ -211,25 +267,32 @@ export default function ChatAssistant({ projects = [] }) {
         </div>
       </div>
 
-      {/* Footer absolute INSIDE modal body */}
       <div style={styles.footerOuter} aria-hidden={false}>
         <div style={styles.footerBox}>
-          {showSuggestions && (
-            <div style={styles.suggestionsRow}>
-              {SUGGESTIONS.map((s, i) => (
-                <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn}>
-                  <span style={{ marginRight: 8 }}>{s.emoji}</span>
-                  <span>{s.text}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          {showSuggestions && <div style={styles.suggestionsRow}>
+            {SUGGESTIONS.map((s, i) => (
+              <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn}>
+                <span style={{ marginRight: 8 }}>{s.emoji}</span>
+                <span>{s.text}</span>
+              </button>
+            ))}
+          </div>}
 
           <form onSubmit={onSubmit} style={styles.inputRow}>
-            <input aria-label="Ask anything you need" placeholder="Ask anything you need" value={input} onChange={(e) => setInput(e.target.value)} style={styles.input} />
+            <input
+              aria-label="Ask anything you need"
+              placeholder="Ask anything you need"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              style={styles.input}
+              onFocus={(e) => e.currentTarget.style.boxShadow = styles.focusStyle.boxShadow}
+              onBlur={(e) => e.currentTarget.style.boxShadow = "none"}
+            />
+
             <button type="button" onClick={toggleMic} title="Speak" style={styles.micBtn} aria-label="Speak">
               <IconMic />
             </button>
+
             <button type="submit" style={styles.sendBtn} aria-label="Send">
               <span style={{ fontWeight: 700 }}>Send</span>
               <IconSend />
