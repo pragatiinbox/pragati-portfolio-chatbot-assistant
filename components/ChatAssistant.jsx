@@ -2,12 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant — stable layout:
- * - Top hero: fixed height (no duplication)
- * - Middle messages area: flex:1 and scrollable (only this scrolls)
- * - Footer: position: sticky inside scroll context with bottom padding (sticky + padded)
+ * ChatAssistant - hero INSIDE scroll area, sticky padded footer (24px)
  *
- * Replace the existing file with this exact code.
+ * Behavior:
+ *  - Top small header is in pages/embed.js (remains fixed at top of modal).
+ *  - Big hero greeting is rendered *inside the scrollable area* and scrolls with messages.
+ *  - Messages area is the main scroll area.
+ *  - Footer (suggestions + input) is position: sticky; bottom: 24px inside the scroll area — padded.
  */
 
 const BRAND = {
@@ -17,7 +18,8 @@ const BRAND = {
   text: "#061425",
   muted: "#6b7280",
   radius: 18,
-  footerPadding: 18 // used for sticky bottom offset
+  footerGap: 24,     // 24px bottom gap as you requested
+  footerHeight: 96   // approximate footer box height (used to reserve space)
 };
 
 const SUGGESTIONS = [
@@ -26,20 +28,6 @@ const SUGGESTIONS = [
   { key: "tools", text: "Which tools do you use?", emoji: "🧰" },
   { key: "about", text: "Who is Pragati?", emoji: "👋" }
 ];
-
-const FAQS = [
-  { keys: ["what tools", "tools do you use", "which tools"], answer: "I primarily use Figma for UI, Protopie for interactions, FigJam for workshops, and Notion for documentation. I validate designs with Maze." },
-  { keys: ["design process", "process", "how do you design"], answer: "Research → sketch → prototype → validate. I prioritise hypotheses and test quickly with prototypes." },
-  { keys: ["who is pragati", "who is pragati sharma"], answer: "Pragati Sharma is a product designer building thoughtful, scalable product experiences. See case studies on the site." }
-];
-
-function findFaq(text) {
-  const t = (text || "").toLowerCase();
-  for (const f of FAQS) {
-    for (const k of f.keys) if (t.includes(k)) return f.answer;
-  }
-  return null;
-}
 
 function IconMic({ stroke = BRAND.blue, size = 20 }) {
   return (
@@ -75,16 +63,15 @@ function groupMessages(msgs) {
   return groups;
 }
 
-export default function ChatAssistant({ projects = [] }) {
-  // start with no messages so the hero only shows once (hero contains greeting)
+export default function ChatAssistant() {
+  // messages start empty so hero is visible once and scrolls with messages
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [listening, setListening] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
-  const middleRef = useRef(null); // scrollable middle region (only this scrolls)
+  const [listening, setListening] = useState(false);
+  const middleRef = useRef(null);
   const recRef = useRef(null);
 
-  // speech recognition init (if supported)
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
@@ -100,7 +87,6 @@ export default function ChatAssistant({ projects = [] }) {
     recRef.current = r;
   }, []);
 
-  // auto-scroll middle area to bottom when messages change
   useEffect(() => {
     if (!middleRef.current) return;
     setTimeout(() => {
@@ -121,13 +107,33 @@ export default function ChatAssistant({ projects = [] }) {
   function handleSuggestion(s) {
     setShowSuggestions(false);
     addMessage({ role: "user", text: s.text });
-    const faq = findFaq(s.text);
-    if (faq) { addMessage({ role: "assistant", text: faq }); speak(faq); return; }
-    if (s.key === "mobile") { const txt = `My top mobile project: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`; addMessage({ role: "assistant", text: txt }); speak(txt); return; }
-    if (s.key === "research") { const txt = "I start with stakeholder interviews, map assumptions, and run 2–3 rapid tests to validate direction."; addMessage({ role: "assistant", text: txt }); speak(txt); return; }
-    if (s.key === "tools") { const txt = "Figma, Protopie, FigJam, Notion, Maze — chosen per stage and fidelity."; addMessage({ role: "assistant", text: txt }); speak(txt); return; }
-    if (s.key === "about") { const txt = "Pragati Sharma is a product designer creating thoughtful, scalable product experiences."; addMessage({ role: "assistant", text: txt }); speak(txt); return; }
-    addMessage({ role: "assistant", text: "Thanks — I got that. Ask me to open a case study or request more details." }); speak("Thanks — I got that.");
+    // small demo responses — replace with your real logic as needed
+    if (s.key === "mobile") {
+      const txt = `My top mobile project: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`;
+      addMessage({ role: "assistant", text: txt });
+      speak(txt);
+      return;
+    }
+    if (s.key === "research") {
+      const txt = "I start with stakeholder interviews, map assumptions, and run 2–3 rapid tests to validate direction.";
+      addMessage({ role: "assistant", text: txt });
+      speak(txt);
+      return;
+    }
+    if (s.key === "tools") {
+      const txt = "Figma, Protopie, FigJam, Notion, Maze — chosen per stage and fidelity.";
+      addMessage({ role: "assistant", text: txt });
+      speak(txt);
+      return;
+    }
+    if (s.key === "about") {
+      const txt = "Pragati Sharma is a product designer creating thoughtful, scalable product experiences.";
+      addMessage({ role: "assistant", text: txt });
+      speak(txt);
+      return;
+    }
+    addMessage({ role: "assistant", text: "Thanks — got it." });
+    speak("Thanks — got it.");
   }
 
   function toggleMic() {
@@ -140,61 +146,48 @@ export default function ChatAssistant({ projects = [] }) {
     if (!input.trim()) return;
     setShowSuggestions(false);
     addMessage({ role: "user", text: input });
-    const faq = findFaq(input);
-    if (faq) { addMessage({ role: "assistant", text: faq }); speak(faq); setInput(""); return; }
-    const lower = input.toLowerCase();
-    if (lower.includes("mobile") && lower.includes("project")) {
-      const txt = `My mobile case study: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`;
-      addMessage({ role: "assistant", text: txt }); speak(txt); setInput(""); return;
-    }
-    addMessage({ role: "assistant", text: `I heard: "${input}". I can open a case study, give a summary, or provide hiring highlights.` }); speak(input); setInput("");
+    // demo auto-response
+    addMessage({ role: "assistant", text: `I heard: "${input}". I can open a case study or provide more details.` });
+    speak(`I heard: ${input}`);
+    setInput("");
   }
 
   const groups = groupMessages(messages);
 
-  // layout sizes
-  const HERO_HEIGHT = 160; // px — fixed top hero height
+  // layout styles
   const styles = {
     root: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)", boxSizing: "border-box" },
 
-    // HERO: fixed height, does not scroll
-    hero: {
-      height: HERO_HEIGHT,
-      minHeight: HERO_HEIGHT,
-      padding: "28px 32px",
-      boxSizing: "border-box",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center"
-    },
-    heroTitle: { fontFamily: "var(--font-heading)", color: BRAND.blue, fontSize: 34, margin: 0, lineHeight: 1.02 },
-    heroSubtitle: { marginTop: 8, color: BRAND.muted, fontSize: 15 },
-
-    // MIDDLE: this is the only scrollable area (flex:1)
+    // MIDDLE is the only scroll area (contains hero + messages + sticky footer)
     middle: {
       flex: 1,
       overflowY: "auto",
-      padding: 32,
+      padding: 28,
       boxSizing: "border-box",
       position: "relative",
-      // ensure there is some bottom padding so sticky footer has breathing room
-      paddingBottom: `${BRAND.footerPadding + 160}px`
+      // reserve padding-bottom for the sticky footer gap + footer height
+      paddingBottom: BRAND.footerGap + BRAND.footerHeight + 12
     },
+
+    heroBox: { display: "flex", gap: 16, alignItems: "center", marginBottom: 18, paddingRight: 12 },
+    heroBlob: { width: 72, height: 72, borderRadius: 14, background: `linear-gradient(135deg, ${BRAND.blue}, #a6d9ff)`, boxShadow: "0 18px 40px rgba(15,128,217,0.06)" },
+    heroTitle: { fontFamily: "var(--font-heading)", color: BRAND.blue, fontSize: 36, lineHeight: 1.02, margin: 0 },
+    heroSubtitle: { marginTop: 8, color: BRAND.muted, fontSize: 15 },
 
     messagesWrap: { display: "flex", flexDirection: "column", gap: 18 },
 
     leftBubble: { alignSelf: "flex-start", background: "#f7fbff", color: BRAND.text, padding: "12px 16px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 14px 30px rgba(10,20,40,0.04)", boxSizing: "border-box" },
     rightBubble: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "12px 16px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 12px 30px rgba(15,128,217,0.14)", boxSizing: "border-box" },
 
-    // FOOTER: sticky inside the middle area, with bottom padding offset
-    footerStickyWrap: {
+    // sticky padded footer inside middle scroll area
+    footerWrap: {
       position: "sticky",
-      bottom: BRAND.footerPadding, // padded sticky so it's visually separated from modal bottom
+      bottom: BRAND.footerGap, // padded sticky with 24px gap
       left: 0,
       right: 0,
-      zIndex: 30,
       display: "flex",
       justifyContent: "center",
+      zIndex: 40,
       paddingTop: 12,
       boxSizing: "border-box"
     },
@@ -264,26 +257,19 @@ export default function ChatAssistant({ projects = [] }) {
 
   return (
     <div style={styles.root}>
-      {/* HERO - fixed and unique (no duplication) */}
-      <div style={styles.hero}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 60, height: 60, borderRadius: 12, background: `linear-gradient(135deg, ${BRAND.blue}, #a6d9ff)`, boxShadow: "0 12px 36px rgba(15,128,217,0.06)" }} />
+      {/* MIDDLE scroll area: contains hero, messages, and sticky padded footer */}
+      <div ref={middleRef} style={styles.middle} aria-live="polite">
+        {/* HERO (this is inside the scroll area — it will scroll with messages) */}
+        <div style={styles.heroBox}>
+          <div style={styles.heroBlob} />
           <div>
             <h2 style={styles.heroTitle}>Hey there! Can I help you with anything?</h2>
             <div style={styles.heroSubtitle}>Ready to assist you with anything you need.</div>
           </div>
         </div>
-      </div>
 
-      {/* MIDDLE area: only this scrolls (messages + sticky footer inside it) */}
-      <div ref={middleRef} style={styles.middle} aria-live="polite">
-        {/* message list */}
+        {/* MESSAGE LIST */}
         <div style={styles.messagesWrap}>
-          {groups.length === 0 && (
-            // small visual spacing when there are no chat messages
-            <div style={{ height: 8 }} />
-          )}
-
           {groups.map((g, gi) => {
             const isUser = g.role === "user";
             return (
@@ -296,13 +282,13 @@ export default function ChatAssistant({ projects = [] }) {
           })}
         </div>
 
-        {/* STICKY FOOTER (inside middle scroll area) — padded with bottom offset */}
-        <div style={styles.footerStickyWrap}>
+        {/* STICKY Padded Footer (bottom: 24px as requested) */}
+        <div style={styles.footerWrap}>
           <div style={styles.footerBox}>
             {showSuggestions && (
-              <div style={styles.suggestionsRow} role="list">
+              <div style={styles.suggestionsRow}>
                 {SUGGESTIONS.map((s, i) => (
-                  <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn} role="listitem">
+                  <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn}>
                     <span style={{ marginRight: 8 }}>{s.emoji}</span>
                     <span>{s.text}</span>
                   </button>
