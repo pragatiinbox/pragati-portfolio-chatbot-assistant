@@ -2,13 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant — ChatGPT-style continuous chat + sticky footer input
- * - Headline uses Pangaia (already wired up by styles/fonts.css)
- * - Body uses Poppins
- * - Header (hero) displays at start only (messages.length <= 2) and then is allowed to scroll away
- * - Chat area scrolls; new messages auto-scroll to bottom
- * - Sticky footer contains suggestions (above) and input/mic/send (below)
- * - Replace inline icon components with /public/icons/*.svg by uploading them (instructions below)
+ * ChatAssistant (corrected)
+ * - scroll area is inside modal body and scrolls
+ * - footer is absolutely positioned inside modal body (so it stays inside modal)
+ * - footer does NOT use fixed position—no leakage outside modal
  */
 
 const BRAND = {
@@ -18,10 +15,9 @@ const BRAND = {
   text: "#061425",
   muted: "#6b7280",
   radius: 18,
-  footerHeight: 110 // used to reserve bottom space for the sticky UI
+  footerHeight: 110
 };
 
-// suggestions (emoji kept, no extra small icons)
 const SUGGESTIONS = [
   { key: "mobile", text: "Show me your best mobile project", emoji: "📱" },
   { key: "research", text: "How do you approach research?", emoji: "🔬" },
@@ -43,7 +39,7 @@ function findFaq(text) {
   return null;
 }
 
-/* --- Inline icon fallbacks (will be replaced by your SVGs if uploaded) --- */
+/* Small inline icons (fallback) */
 function IconMic({ stroke = BRAND.blue, size = 22 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -62,7 +58,7 @@ function IconSend({ stroke = "#fff", size = 18 }) {
   );
 }
 
-/* --- Helper: message bubble groups (simple grouping: consecutive same-role messages) --- */
+/* simple grouping function same as earlier */
 function groupMessages(msgs) {
   if (!msgs || msgs.length === 0) return [];
   const groups = [];
@@ -90,11 +86,11 @@ export default function ChatAssistant({ projects = [] }) {
   const scrollRef = useRef(null);
   const recRef = useRef(null);
 
-  // Speech recognition
+  // speech recognition
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-    const r = new SpeechRecognition();
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const r = new SR();
     r.lang = "en-US";
     r.interimResults = false;
     r.maxAlternatives = 1;
@@ -106,10 +102,9 @@ export default function ChatAssistant({ projects = [] }) {
     recRef.current = r;
   }, []);
 
-  // auto-scroll to bottom for new messages
+  // auto scroll to bottom on message change
   useEffect(() => {
     if (!scrollRef.current) return;
-    // small timeout to ensure DOM updated
     setTimeout(() => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }, 40);
@@ -118,7 +113,6 @@ export default function ChatAssistant({ projects = [] }) {
   function addMessage(msg) {
     setMessages(prev => [...prev, msg]);
   }
-
   function speak(text) {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
@@ -129,37 +123,19 @@ export default function ChatAssistant({ projects = [] }) {
   }
 
   function handleSuggestion(s) {
-    // hide suggestions on first interaction — ChatGPT shows a simpler new-chat hero then continuous
     setShowSuggestions(false);
     addMessage({ role: "user", text: s.text });
     const faq = findFaq(s.text);
-    if (faq) {
-      addMessage({ role: "assistant", text: faq });
-      speak(faq);
-      return;
-    }
-    if (s.key === "mobile") {
-      const txt = `My top mobile project: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`;
-      addMessage({ role: "assistant", text: txt }); speak(txt); return;
-    }
-    if (s.key === "research") {
-      const txt = "I start with stakeholder interviews, map assumptions, and run 2–3 rapid tests to validate direction."; addMessage({ role: "assistant", text: txt }); speak(txt); return;
-    }
-    if (s.key === "tools") {
-      const txt = "Figma, Protopie, FigJam, Notion, Maze — chosen per stage and fidelity."; addMessage({ role: "assistant", text: txt }); speak(txt); return;
-    }
-    if (s.key === "about") {
-      const txt = "Pragati Sharma is a product designer creating thoughtful, scalable product experiences."; addMessage({ role: "assistant", text: txt }); speak(txt); return;
-    }
-    addMessage({ role: "assistant", text: "Thanks — I got that. Ask me to open a case study or request more details." });
-    speak("Thanks — I got that.");
+    if (faq) { addMessage({ role: "assistant", text: faq }); speak(faq); return; }
+    if (s.key === "mobile") { const txt = `My top mobile project: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`; addMessage({ role: "assistant", text: txt }); speak(txt); return; }
+    if (s.key === "research") { const txt = "I start with stakeholder interviews, map assumptions, and run 2–3 rapid tests to validate direction."; addMessage({ role: "assistant", text: txt }); speak(txt); return; }
+    if (s.key === "tools") { const txt = "Figma, Protopie, FigJam, Notion, Maze — chosen per stage and fidelity."; addMessage({ role: "assistant", text: txt }); speak(txt); return; }
+    if (s.key === "about") { const txt = "Pragati Sharma is a product designer creating thoughtful, scalable product experiences."; addMessage({ role: "assistant", text: txt }); speak(txt); return; }
+    addMessage({ role: "assistant", text: "Thanks — I got that. Ask me to open a case study or request more details." }); speak("Thanks — I got that.");
   }
 
   function toggleMic() {
-    if (!recRef.current) {
-      alert("Speech recognition not supported in this browser (try Chrome).");
-      return;
-    }
+    if (!recRef.current) { alert("Speech recognition not supported in this browser (try Chrome)."); return; }
     if (listening) { recRef.current.stop(); setListening(false); } else { recRef.current.start(); setListening(true); }
   }
 
@@ -169,9 +145,7 @@ export default function ChatAssistant({ projects = [] }) {
     setShowSuggestions(false);
     addMessage({ role: "user", text: input });
     const faq = findFaq(input);
-    if (faq) {
-      addMessage({ role: "assistant", text: faq }); speak(faq); setInput(""); return;
-    }
+    if (faq) { addMessage({ role: "assistant", text: faq }); speak(faq); setInput(""); return; }
     const lower = input.toLowerCase();
     if (lower.includes("mobile") && lower.includes("project")) {
       const txt = `My mobile case study: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`;
@@ -180,49 +154,53 @@ export default function ChatAssistant({ projects = [] }) {
     addMessage({ role: "assistant", text: `I heard: "${input}". I can open a case study, give a summary, or provide hiring highlights.` }); speak(input); setInput("");
   }
 
-  // groups for rendering
   const groups = groupMessages(messages);
 
-  /* --- styles (JS) --- */
+  /* styles */
   const styles = {
-    shell: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)" },
+    container: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)" },
+    // THIS is the scrollable area inside the modal body
     scrollArea: {
       flex: 1,
       overflowY: "auto",
-      padding: "32px",
-      paddingBottom: BRAND.footerHeight + 28 // leave space for sticky footer
+      padding: 32,
+      paddingBottom: BRAND.footerHeight + 32 // reserve for footer inside modal
     },
-    heroWrap: { textAlign: "center", marginBottom: 20, userSelect: "none" },
+    heroWrap: { textAlign: "center", marginBottom: 20 },
     orb: { width: 86, height: 86, borderRadius: 18, margin: "0 auto 18px", display: "grid", placeItems: "center", background: `linear-gradient(135deg, rgba(15,128,217,0.08), rgba(15,128,217,0.02))`, boxShadow: "0 12px 36px rgba(15,128,217,0.06)" },
     title: { margin: 0, fontFamily: "var(--font-heading)", color: BRAND.blue, fontSize: 44, lineHeight: 1.02, fontWeight: 700 },
     subtitle: { marginTop: 10, color: BRAND.muted, fontSize: 15 },
-    messagesWrap: { display: "flex", flexDirection: "column", gap: 12, alignItems: "stretch", marginTop: 10 },
+    messagesWrap: { display: "flex", flexDirection: "column", gap: 12 },
+    groupLeft: { alignSelf: "flex-start", background: "#f7fbff", color: BRAND.text, padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 6px 18px rgba(10,20,40,0.03)" },
+    groupRight: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 8px 24px rgba(15,128,217,0.12)" },
 
-    /* grouped bubble */
-    groupLeft: { alignSelf: "flex-start", display: "inline-block", background: "#f7fbff", color: BRAND.text, padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 6px 18px rgba(10,20,40,0.03)" },
-    groupRight: { alignSelf: "flex-end", display: "inline-block", background: BRAND.blue, color: "#fff", padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 8px 24px rgba(15,128,217,0.12)" },
-    groupInnerText: { display: "block", marginBottom: 8 },
-
-    /* footer sticky */
-    footerShell: { position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 80, display: "flex", justifyContent: "center", pointerEvents: "auto" },
-    footer: { width: "92%", maxWidth: 1180, background: "#fff", borderRadius: "16px 16px 0 0", boxShadow: "0 -20px 60px rgba(2,6,23,0.06)", padding: "14px 20px" },
-    suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12, justifyContent: "flex-start" },
-    suggestionBtn: { padding: "10px 14px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", fontSize: 14, boxShadow: "0 6px 18px rgba(10,20,40,0.04)" },
+    // Footer is positioned ABSOLUTE inside the modal body (not fixed)
+    footerOuter: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      bottom: 0,
+      display: "flex",
+      justifyContent: "center",
+      padding: "16px 0 26px" // some bottom breathing within the modal
+    },
+    footerBox: { width: "92%", maxWidth: 1180, background: "#fff", borderRadius: 14, boxShadow: "0 -20px 60px rgba(2,6,23,0.06)", padding: "14px 20px" },
+    suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 },
+    suggestionBtn: { padding: "10px 14px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", fontSize: 14 },
     inputRow: { display: "flex", gap: 12, alignItems: "center" },
-    input: { flex: 1, padding: "14px 18px", borderRadius: 14, border: `1.5px solid ${BRAND.blue}`, fontSize: 15, outline: "none" },
+    input: { flex: 1, padding: "14px 18px", borderRadius: 14, border: `1.5px solid ${BRAND.blue}`, fontSize: 15 },
     micBtn: { padding: 12, borderRadius: 12, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", display: "grid", placeItems: "center" },
     sendBtn: { padding: "12px 18px", borderRadius: 14, background: BRAND.blue, color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }
   };
 
   return (
-    <div style={styles.shell}>
+    <div style={styles.container}>
+      {/* scrollable chat area inside modal */}
       <div ref={scrollRef} style={styles.scrollArea} aria-live="polite">
-        {/* show hero only when it's a new chat (messages small), then it scrolls away */}
+        {/* hero only initially */}
         {messages.length <= 2 && (
           <div style={styles.heroWrap}>
-            <div style={styles.orb}>
-              <div style={{ width: 48, height: 48, borderRadius: 10, background: `linear-gradient(145deg, ${BRAND.blue}, #a6d9ff)` }} />
-            </div>
+            <div style={styles.orb}><div style={{ width: 48, height: 48, borderRadius: 10, background: `linear-gradient(145deg, ${BRAND.blue}, #a6d9ff)` }} /></div>
             <h1 style={styles.title}>Hey there! Can I help you with anything?</h1>
             <div style={styles.subtitle}>Ready to assist you with anything you need.</div>
           </div>
@@ -235,7 +213,7 @@ export default function ChatAssistant({ projects = [] }) {
               <div key={gi} style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start" }}>
                 <div style={isUser ? styles.groupRight : styles.groupLeft}>
                   {g.texts.map((t, ti) => (
-                    <div key={ti} style={styles.groupInnerText}>
+                    <div key={ti} style={{ marginBottom: ti < g.texts.length - 1 ? 8 : 0 }}>
                       {t}
                     </div>
                   ))}
@@ -246,9 +224,9 @@ export default function ChatAssistant({ projects = [] }) {
         </div>
       </div>
 
-      {/* footer pinned to bottom (centered container so it looks like modal footer) */}
-      <div style={styles.footerShell} aria-hidden={false}>
-        <div style={styles.footer}>
+      {/* footer ABSOLUTE inside modal (so it stays inside shell) */}
+      <div style={styles.footerOuter} aria-hidden={false}>
+        <div style={styles.footerBox}>
           {showSuggestions && (
             <div style={styles.suggestionsRow}>
               {SUGGESTIONS.map((s, i) => (
@@ -261,22 +239,12 @@ export default function ChatAssistant({ projects = [] }) {
           )}
 
           <form onSubmit={onSubmit} style={styles.inputRow}>
-            <input
-              aria-label="Ask anything you need"
-              placeholder="Ask anything you need"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              style={styles.input}
-            />
-
+            <input aria-label="Ask anything you need" placeholder="Ask anything you need" value={input} onChange={(e) => setInput(e.target.value)} style={styles.input} />
             <button type="button" onClick={toggleMic} title="Speak" style={styles.micBtn} aria-label="Speak">
-              {/* If you uploaded /public/icons/mic.svg, replace with an <img /> here */}
               <IconMic />
             </button>
-
             <button type="submit" style={styles.sendBtn} aria-label="Send">
               <span style={{ fontWeight: 700 }}>Send</span>
-              {/* Replace with custom svg if you upload one */}
               <IconSend />
             </button>
           </form>
