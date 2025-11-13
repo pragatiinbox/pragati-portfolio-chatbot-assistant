@@ -1,0 +1,30 @@
+[
+  {
+    "id": "mobile-checkout",
+    "question": "Show me your best mobile project",
+    "keywords": ["mobile project", "best mobile", "mobile checkout", "mobile case study", "mobile project"],
+    "answer": "My top mobile project is the Mobile Checkout Redesign — I simplified the checkout flow, reduced steps by 30%, and improved conversion through microcopy and clearer affordances. View it: https://pragatisharma.in/mobile-checkout",
+    "source": "https://pragatisharma.in/mobile-checkout"
+  },
+  {
+    "id": "research-approach",
+    "question": "How do you approach research?",
+    "keywords": ["research", "approach research", "user research", "research process"],
+    "answer": "I start with stakeholder interviews, form assumptions, then run 2–3 rapid prototype tests to validate direction. I prioritise hypotheses by business impact and user effort.",
+    "source": ""
+  },
+  {
+    "id": "tools",
+    "question": "Which tools do you use?",
+    "keywords": ["tools", "which tools", "tool stack", "software"],
+    "answer": "I use Figma, FigJam, Protopie for prototyping, Notion for docs, and Maze for remote usability testing.",
+    "source": ""
+  },
+  {
+    "id": "about-pragati",
+    "question": "Who is Pragati?",
+    "keywords": ["who is pragati", "about pragati", "about you", "pragati"],
+    "answer": "I'm Pragati Sharma — a Product Designer focused on building thoughtful, scalable product experiences. I work across fintech, telecom and SaaS. (5 years experience).",
+    "source": "https://pragatisharma.in/about"
+  }
+]
