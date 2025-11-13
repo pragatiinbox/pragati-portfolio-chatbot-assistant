@@ -2,13 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant (sticky footer input + suggestions)
- * - Header is inside the scroll area so it scrolls away (like ChatGPT)
- * - Footer is sticky at bottom: suggestions above input, input + mic + send below
- * - Suggestions auto-hide after first user interaction (can be changed)
- * - Inline Feather-like icons (rounded, slightly thicker strokes)
- *
- * Replace the file entirely with this code and commit.
+ * ChatAssistant — ChatGPT-style continuous chat + sticky footer input
+ * - Headline uses Pangaia (already wired up by styles/fonts.css)
+ * - Body uses Poppins
+ * - Header (hero) displays at start only (messages.length <= 2) and then is allowed to scroll away
+ * - Chat area scrolls; new messages auto-scroll to bottom
+ * - Sticky footer contains suggestions (above) and input/mic/send (below)
+ * - Replace inline icon components with /public/icons/*.svg by uploading them (instructions below)
  */
 
 const BRAND = {
@@ -17,9 +17,11 @@ const BRAND = {
   softGray: "#f3f6fa",
   text: "#061425",
   muted: "#6b7280",
-  radius: 18
+  radius: 18,
+  footerHeight: 110 // used to reserve bottom space for the sticky UI
 };
 
+// suggestions (emoji kept, no extra small icons)
 const SUGGESTIONS = [
   { key: "mobile", text: "Show me your best mobile project", emoji: "📱" },
   { key: "research", text: "How do you approach research?", emoji: "🔬" },
@@ -30,54 +32,65 @@ const SUGGESTIONS = [
 const FAQS = [
   { keys: ["what tools", "tools do you use", "which tools"], answer: "I primarily use Figma for UI, Protopie for interactions, FigJam for workshops, and Notion for documentation. I validate designs with Maze." },
   { keys: ["design process", "process", "how do you design"], answer: "Research → sketch → prototype → validate. I prioritise hypotheses and test quickly with prototypes." },
-  { keys: ["who is pragati", "who is pragati sharma"], answer: "Pragati Sharma is a product designer building scalable, empathetic product experiences. See case studies on the site." },
-  { keys: ["experience", "industry", "worked"], answer: "I've worked across fintech, telecom and SaaS with a focus on measurable outcomes." }
+  { keys: ["who is pragati", "who is pragati sharma"], answer: "Pragati Sharma is a product designer building thoughtful, scalable product experiences. See case studies on the site." }
 ];
 
 function findFaq(text) {
   const t = (text || "").toLowerCase();
   for (const f of FAQS) {
-    for (const k of f.keys) {
-      if (t.includes(k)) return f.answer;
-    }
+    for (const k of f.keys) if (t.includes(k)) return f.answer;
   }
   return null;
 }
 
-/* Rounded, slightly thicker feather-like icons to match screenshot */
-function IconMic({ stroke = BRAND.blue, size = 20 }) {
+/* --- Inline icon fallbacks (will be replaced by your SVGs if uploaded) --- */
+function IconMic({ stroke = BRAND.blue, size = 22 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="6" y="2" width="12" height="14" rx="6" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="7" y="2" width="10" height="14" rx="6" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M12 18v3" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M8 21h8" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
-function IconSend({ stroke = "#fff", size = 20 }) {
-  // filled blue background expected around this icon; icon stroke white
+function IconSend({ stroke = "#fff", size = 18 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       <path d="M22 2L11 13" stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M22 2L15 22l-3-9-9-3 19-7z" stroke={stroke} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.06" />
+      <path d="M22 2L15 22l-3-9-9-3 19-7z" stroke={stroke} strokeWidth="1.0" strokeLinecap="round" strokeLinejoin="round" opacity="0.06" />
     </svg>
   );
 }
 
-/* If you want to use a custom SVG icon file, see the bottom of this message for instructions */
+/* --- Helper: message bubble groups (simple grouping: consecutive same-role messages) --- */
+function groupMessages(msgs) {
+  if (!msgs || msgs.length === 0) return [];
+  const groups = [];
+  let current = { role: msgs[0].role, texts: [msgs[0].text] };
+  for (let i = 1; i < msgs.length; i++) {
+    const m = msgs[i];
+    if (m.role === current.role) current.texts.push(m.text);
+    else {
+      groups.push(current);
+      current = { role: m.role, texts: [m.text] };
+    }
+  }
+  groups.push(current);
+  return groups;
+}
 
 export default function ChatAssistant({ projects = [] }) {
   const [messages, setMessages] = useState([
     { role: "assistant", text: "Hey there! Can I help you with anything?" },
-    { role: "assistant-sub", text: "Ready to assist you with anything you need." }
+    { role: "assistant", text: "Ready to assist you with anything you need." }
   ]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
-  const [suggestionsVisible, setSuggestionsVisible] = useState(true);
+  const [showSuggestions, setShowSuggestions] = useState(true);
+  const scrollRef = useRef(null);
   const recRef = useRef(null);
-  const scrollAreaRef = useRef(null);
 
-  // speech recognition (browser)
+  // Speech recognition
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
@@ -93,15 +106,17 @@ export default function ChatAssistant({ projects = [] }) {
     recRef.current = r;
   }, []);
 
-  // autoscroll on messages
+  // auto-scroll to bottom for new messages
   useEffect(() => {
-    // scroll to bottom of the scroll area
-    if (!scrollAreaRef.current) return;
-    scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    if (!scrollRef.current) return;
+    // small timeout to ensure DOM updated
+    setTimeout(() => {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }, 40);
   }, [messages]);
 
-  function addMessage(m) {
-    setMessages(prev => [...prev, m]);
+  function addMessage(msg) {
+    setMessages(prev => [...prev, msg]);
   }
 
   function speak(text) {
@@ -114,9 +129,8 @@ export default function ChatAssistant({ projects = [] }) {
   }
 
   function handleSuggestion(s) {
-    // hide suggestions after interaction
-    setSuggestionsVisible(false);
-
+    // hide suggestions on first interaction — ChatGPT shows a simpler new-chat hero then continuous
+    setShowSuggestions(false);
     addMessage({ role: "user", text: s.text });
     const faq = findFaq(s.text);
     if (faq) {
@@ -124,34 +138,21 @@ export default function ChatAssistant({ projects = [] }) {
       speak(faq);
       return;
     }
-    // canned responses
     if (s.key === "mobile") {
       const txt = `My top mobile project: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`;
-      addMessage({ role: "assistant", text: txt });
-      speak(txt);
-      return;
+      addMessage({ role: "assistant", text: txt }); speak(txt); return;
     }
     if (s.key === "research") {
-      const txt = "I start with stakeholder interviews, map assumptions, and run 2–3 rapid tests to validate direction.";
-      addMessage({ role: "assistant", text: txt });
-      speak(txt);
-      return;
+      const txt = "I start with stakeholder interviews, map assumptions, and run 2–3 rapid tests to validate direction."; addMessage({ role: "assistant", text: txt }); speak(txt); return;
     }
     if (s.key === "tools") {
-      const txt = "Figma, Protopie, FigJam, Notion, Maze — chosen per stage and fidelity.";
-      addMessage({ role: "assistant", text: txt });
-      speak(txt);
-      return;
+      const txt = "Figma, Protopie, FigJam, Notion, Maze — chosen per stage and fidelity."; addMessage({ role: "assistant", text: txt }); speak(txt); return;
     }
     if (s.key === "about") {
-      const txt = "Pragati Sharma is a product designer creating thoughtful, scalable product experiences.";
-      addMessage({ role: "assistant", text: txt });
-      speak(txt);
-      return;
+      const txt = "Pragati Sharma is a product designer creating thoughtful, scalable product experiences."; addMessage({ role: "assistant", text: txt }); speak(txt); return;
     }
-    const fallback = "Thanks — I got that. Ask me to open a case study or request more details.";
-    addMessage({ role: "assistant", text: fallback });
-    speak(fallback);
+    addMessage({ role: "assistant", text: "Thanks — I got that. Ask me to open a case study or request more details." });
+    speak("Thanks — I got that.");
   }
 
   function toggleMic() {
@@ -159,121 +160,127 @@ export default function ChatAssistant({ projects = [] }) {
       alert("Speech recognition not supported in this browser (try Chrome).");
       return;
     }
-    if (listening) {
-      recRef.current.stop();
-      setListening(false);
-    } else {
-      recRef.current.start();
-      setListening(true);
-    }
+    if (listening) { recRef.current.stop(); setListening(false); } else { recRef.current.start(); setListening(true); }
   }
 
   function onSubmit(e) {
     e?.preventDefault();
     if (!input.trim()) return;
-
-    // first interaction hides suggestions
-    setSuggestionsVisible(false);
-
+    setShowSuggestions(false);
     addMessage({ role: "user", text: input });
     const faq = findFaq(input);
     if (faq) {
-      addMessage({ role: "assistant", text: faq });
-      speak(faq);
-      setInput("");
-      return;
+      addMessage({ role: "assistant", text: faq }); speak(faq); setInput(""); return;
     }
-
     const lower = input.toLowerCase();
     if (lower.includes("mobile") && lower.includes("project")) {
       const txt = `My mobile case study: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`;
-      addMessage({ role: "assistant", text: txt });
-      speak(txt);
-      setInput("");
-      return;
+      addMessage({ role: "assistant", text: txt }); speak(txt); setInput(""); return;
     }
-
-    const fallback = `I heard: "${input}". I can open a case study, give a short summary, or provide hiring highlights.`;
-    addMessage({ role: "assistant", text: fallback });
-    speak(fallback);
-    setInput("");
+    addMessage({ role: "assistant", text: `I heard: "${input}". I can open a case study, give a summary, or provide hiring highlights.` }); speak(input); setInput("");
   }
 
-  /* inline styles (JS-in-CSS) */
-  const styles = {
-    shell: { display: "flex", flexDirection: "column", height: "100%", background: BRAND.pale, fontFamily: "var(--font-body)" },
-    scrollArea: { flex: 1, overflow: "auto", padding: 28 },
-    headerWrap: { textAlign: "center", padding: "28px 0 20px 0" },
-    orb: { width: 86, height: 86, borderRadius: 18, margin: "0 auto 18px", display: "grid", placeItems: "center", background: `linear-gradient(135deg, rgba(15,128,217,0.08), rgba(15,128,217,0.02))`, boxShadow: "0 12px 36px rgba(15,128,217,0.06)" },
-    title: { margin: 0, fontFamily: "var(--font-heading)", color: BRAND.blue, fontSize: 36, lineHeight: 1.02, fontWeight: 700 },
-    subtitle: { marginTop: 8, color: BRAND.muted, fontSize: 15 },
-    messages: { marginTop: 18, display: "flex", flexDirection: "column", gap: 12 },
-    messageUser: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "10px 14px", borderRadius: 12, maxWidth: "78%" },
-    messageAssistant: { alignSelf: "flex-start", background: "#f7fbff", color: BRAND.text, padding: "10px 14px", borderRadius: 12, maxWidth: "78%" },
+  // groups for rendering
+  const groups = groupMessages(messages);
 
-    /* sticky footer */
-    footer: {
-      borderTop: "1px solid rgba(10,20,40,0.04)",
-      background: "#fff",
-      padding: "12px 20px",
-      boxShadow: "0 -10px 30px rgba(2,6,23,0.04)",
-      position: "sticky",
-      bottom: 0,
-      zIndex: 40,
-      borderRadius: "14px 14px 0 0"
+  /* --- styles (JS) --- */
+  const styles = {
+    shell: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)" },
+    scrollArea: {
+      flex: 1,
+      overflowY: "auto",
+      padding: "32px",
+      paddingBottom: BRAND.footerHeight + 28 // leave space for sticky footer
     },
-    suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 10 },
+    heroWrap: { textAlign: "center", marginBottom: 20, userSelect: "none" },
+    orb: { width: 86, height: 86, borderRadius: 18, margin: "0 auto 18px", display: "grid", placeItems: "center", background: `linear-gradient(135deg, rgba(15,128,217,0.08), rgba(15,128,217,0.02))`, boxShadow: "0 12px 36px rgba(15,128,217,0.06)" },
+    title: { margin: 0, fontFamily: "var(--font-heading)", color: BRAND.blue, fontSize: 44, lineHeight: 1.02, fontWeight: 700 },
+    subtitle: { marginTop: 10, color: BRAND.muted, fontSize: 15 },
+    messagesWrap: { display: "flex", flexDirection: "column", gap: 12, alignItems: "stretch", marginTop: 10 },
+
+    /* grouped bubble */
+    groupLeft: { alignSelf: "flex-start", display: "inline-block", background: "#f7fbff", color: BRAND.text, padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 6px 18px rgba(10,20,40,0.03)" },
+    groupRight: { alignSelf: "flex-end", display: "inline-block", background: BRAND.blue, color: "#fff", padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 8px 24px rgba(15,128,217,0.12)" },
+    groupInnerText: { display: "block", marginBottom: 8 },
+
+    /* footer sticky */
+    footerShell: { position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 80, display: "flex", justifyContent: "center", pointerEvents: "auto" },
+    footer: { width: "92%", maxWidth: 1180, background: "#fff", borderRadius: "16px 16px 0 0", boxShadow: "0 -20px 60px rgba(2,6,23,0.06)", padding: "14px 20px" },
+    suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12, justifyContent: "flex-start" },
     suggestionBtn: { padding: "10px 14px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", fontSize: 14, boxShadow: "0 6px 18px rgba(10,20,40,0.04)" },
     inputRow: { display: "flex", gap: 12, alignItems: "center" },
-    input: { flex: 1, padding: "14px 18px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`, fontSize: 15, background: "#fff" },
+    input: { flex: 1, padding: "14px 18px", borderRadius: 14, border: `1.5px solid ${BRAND.blue}`, fontSize: 15, outline: "none" },
     micBtn: { padding: 12, borderRadius: 12, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", display: "grid", placeItems: "center" },
-    sendBtn: { padding: "12px 18px", borderRadius: 14, background: BRAND.blue, color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 10px 30px rgba(15,128,217,0.16)" }
+    sendBtn: { padding: "12px 18px", borderRadius: 14, background: BRAND.blue, color: "#fff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }
   };
 
   return (
     <div style={styles.shell}>
-      {/* scrollable area: header + messages — header scrolls away naturally */}
-      <div ref={scrollAreaRef} style={styles.scrollArea}>
-        <div style={styles.headerWrap}>
-          <div style={styles.orb}><div style={{ width: 44, height: 44, borderRadius: 10, background: `linear-gradient(145deg, ${BRAND.blue}, #a6d9ff)` }} /></div>
-          <h1 style={styles.title}>Hey there! Can I help you with anything?</h1>
-          <div style={styles.subtitle}>Ready to assist you with anything you need.</div>
-        </div>
-
-        <div style={styles.messages}>
-          {messages.map((m, i) => (
-            <div key={i} style={m.role === "user" ? styles.messageUser : styles.messageAssistant}>
-              {m.text}
+      <div ref={scrollRef} style={styles.scrollArea} aria-live="polite">
+        {/* show hero only when it's a new chat (messages small), then it scrolls away */}
+        {messages.length <= 2 && (
+          <div style={styles.heroWrap}>
+            <div style={styles.orb}>
+              <div style={{ width: 48, height: 48, borderRadius: 10, background: `linear-gradient(145deg, ${BRAND.blue}, #a6d9ff)` }} />
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* sticky footer (suggestions above input) */}
-      <div style={styles.footer}>
-        {/* suggestions (can hide after first interaction) */}
-        {suggestionsVisible && (
-          <div style={styles.suggestionsRow}>
-            {SUGGESTIONS.map((s, idx) => (
-              <button key={idx} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn}>
-                <span style={{ marginRight: 8 }}>{s.emoji}</span>
-                <span>{s.text}</span>
-              </button>
-            ))}
+            <h1 style={styles.title}>Hey there! Can I help you with anything?</h1>
+            <div style={styles.subtitle}>Ready to assist you with anything you need.</div>
           </div>
         )}
 
-        {/* input row */}
-        <form onSubmit={onSubmit} style={styles.inputRow}>
-          <input aria-label="Ask anything" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask anything you need" style={styles.input} />
-          <button type="button" onClick={toggleMic} title="Speak" style={styles.micBtn} aria-label="Speak">
-            <IconMic />
-          </button>
-          <button type="submit" title="Send" style={styles.sendBtn} aria-label="Send">
-            <span style={{ fontWeight: 700 }}>Send</span>
-            <IconSend />
-          </button>
-        </form>
+        <div style={styles.messagesWrap}>
+          {groups.map((g, gi) => {
+            const isUser = g.role === "user";
+            return (
+              <div key={gi} style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start" }}>
+                <div style={isUser ? styles.groupRight : styles.groupLeft}>
+                  {g.texts.map((t, ti) => (
+                    <div key={ti} style={styles.groupInnerText}>
+                      {t}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* footer pinned to bottom (centered container so it looks like modal footer) */}
+      <div style={styles.footerShell} aria-hidden={false}>
+        <div style={styles.footer}>
+          {showSuggestions && (
+            <div style={styles.suggestionsRow}>
+              {SUGGESTIONS.map((s, i) => (
+                <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn}>
+                  <span style={{ marginRight: 8 }}>{s.emoji}</span>
+                  <span>{s.text}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <form onSubmit={onSubmit} style={styles.inputRow}>
+            <input
+              aria-label="Ask anything you need"
+              placeholder="Ask anything you need"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              style={styles.input}
+            />
+
+            <button type="button" onClick={toggleMic} title="Speak" style={styles.micBtn} aria-label="Speak">
+              {/* If you uploaded /public/icons/mic.svg, replace with an <img /> here */}
+              <IconMic />
+            </button>
+
+            <button type="submit" style={styles.sendBtn} aria-label="Send">
+              <span style={{ fontWeight: 700 }}>Send</span>
+              {/* Replace with custom svg if you upload one */}
+              <IconSend />
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
