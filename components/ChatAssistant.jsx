@@ -2,18 +2,17 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant — measured footer reserve version
- * - ensures the scrollable middle area has padding-bottom = footerHeight + footerGap (24px)
- * - footer remains pinned to bottom as a flex child (end-to-end visual box inside modal)
- *
- * Overwrite your existing component with this exact file.
+ * ChatAssistant — footer end-to-end and pinned
+ * - Footer visually spans the modal horizontally (margin 24px each side)
+ * - Footer pinned to modal bottom (sibling of the scroll area)
+ * - Middle scroll area reserves footer height + 24px so content scrolls underneath
  */
 
 const BRAND = {
   blue: "#0f80d9",
   muted: "#6b7280",
   softGray: "#f3f6fa",
-  footerGap: 24 // requested breathing space (px)
+  footerGap: 24 // breathing space (px)
 };
 
 const SUGGESTIONS = [
@@ -66,7 +65,7 @@ export default function ChatAssistant() {
   const footerRef = useRef(null);
   const recRef = useRef(null);
 
-  // speech recognition optional (keeps previous behavior)
+  // optional speech recognition
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
@@ -82,21 +81,17 @@ export default function ChatAssistant() {
     recRef.current = r;
   }, []);
 
-  // ensure scroll area reserves space equal to footer height + gap
+  // measure footer and reserve space in middle scroll area
   const measureAndReserve = () => {
     if (!middleRef.current || !footerRef.current) return;
     const footerHeight = footerRef.current.offsetHeight || 0;
     const gap = BRAND.footerGap;
-    // Set paddingBottom on the scroll container
     middleRef.current.style.paddingBottom = `${footerHeight + gap}px`;
   };
 
-  // run measurement on mount and whenever footer size changes or window resizes
   useLayoutEffect(() => {
     measureAndReserve();
-    const ro = new ResizeObserver(() => {
-      measureAndReserve();
-    });
+    const ro = new ResizeObserver(() => measureAndReserve());
     if (footerRef.current) ro.observe(footerRef.current);
     window.addEventListener("resize", measureAndReserve);
     return () => {
@@ -105,12 +100,12 @@ export default function ChatAssistant() {
     };
   }, []);
 
-  // auto-scroll to bottom when messages change
+  // scroll on new messages
   useEffect(() => {
     if (!middleRef.current) return;
     setTimeout(() => {
       middleRef.current.scrollTop = middleRef.current.scrollHeight;
-    }, 40);
+    }, 30);
   }, [messages]);
 
   function addMessage(m) { setMessages(prev => [...prev, m]); }
@@ -118,7 +113,7 @@ export default function ChatAssistant() {
   function handleSuggestion(s) {
     setShowSuggestions(false);
     addMessage({ role: "user", text: s.text });
-    // demo responses:
+    // demo assistant replies
     if (s.key === "mobile") {
       addMessage({ role: "assistant", text: `My top mobile project: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout` });
       return;
@@ -150,11 +145,10 @@ export default function ChatAssistant() {
 
   const groups = groupMessages(messages);
 
-  // inline styles for copy/paste simplicity
+  // styles (inline for easy copy/paste)
   const styles = {
     shell: { height: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box", background: "#fbfeff", fontFamily: "var(--font-body)" },
 
-    // middle = scrollable area with hero + messages
     middle: {
       flex: 1,
       overflowY: "auto",
@@ -173,13 +167,12 @@ export default function ChatAssistant() {
     leftBubble: { alignSelf: "flex-start", background: "#f7fbff", color: "#061425", padding: "12px 16px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 14px 30px rgba(10,20,40,0.04)", boxSizing: "border-box" },
     rightBubble: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "12px 16px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 12px 30px rgba(15,128,217,0.14)", boxSizing: "border-box" },
 
-    // footer placed AFTER middle (so it stays pinned to bottom)
-    footerShell: { padding: BRAND.footerGap, boxSizing: "border-box", background: "transparent" },
+    // make footer appear end-to-end inside modal (24px left/right margin)
+    footerShell: { boxSizing: "border-box", background: "transparent", paddingTop: 0, paddingBottom: BRAND.footerGap },
 
     footerBox: {
-      width: "92%",
-      maxWidth: 1180,
-      margin: "0 auto",
+      margin: `0 ${BRAND.footerGap}px`,   // this makes it span from modal left-inner to right-inner with 24px margins
+      width: `calc(100% - ${BRAND.footerGap * 2}px)`,
       background: "#fff",
       borderRadius: 14,
       boxShadow: "0 20px 60px rgba(2,6,23,0.06)",
@@ -266,7 +259,7 @@ export default function ChatAssistant() {
         </div>
       </div>
 
-      {/* FOOTER (pinned to bottom because it's a sibling of the scroll area) */}
+      {/* FOOTER pinned to bottom; full-width inside modal using left/right margin */}
       <div style={styles.footerShell}>
         <div ref={footerRef} style={styles.footerBox}>
           {showSuggestions && (
