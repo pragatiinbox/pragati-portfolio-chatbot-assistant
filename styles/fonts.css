@@ -1,0 +1,36 @@
+/* Pangaia Bold */
+@font-face {
+  font-family: "Pangaia";
+  src: url("/fonts/PPPangaia-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Pangaia Bold Italic */
+@font-face {
+  font-family: "Pangaia";
+  src: url("/fonts/PPPangaia-BoldItalic.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Poppins for body text */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* CSS variables for your site */
+:root {
+  --font-heading: "Pangaia", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --font-body: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* Apply fonts */
+h1, h2, h3, .heading {
+  font-family: var(--font-heading);
+  font-weight: 700; /* you only have bold */
+}
+
+body, input, button, textarea, select {
+  font-family: var(--font-body);
+}
