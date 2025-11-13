@@ -2,42 +2,46 @@
 import ChatAssistant from "../components/ChatAssistant";
 
 export default function Embed() {
-  // Bring your real project links here (same shape as other pages)
   const projects = [
     { id: "p1", title: "Mobile Checkout Redesign", short: "Checkout flow & microinteractions", url: "https://pragatisharma.in/mobile-checkout", type: "mobile" },
     { id: "p2", title: "B2B Dashboard", short: "Data-heavy dashboard & analytics", url: "https://pragatisharma.in/b2b-dashboard", type: "web" },
-    { id: "p3", title: "Brand Refresh", short: "Visual identity & brand guidelines", url: "https://pragatisharma.in/brand-refresh", type: "brand" },
-    { id: "p4", title: "Design System", short: "Reusable components & tokens", url: "https://pragatisharma.in/design-system", type: "system" }
+    { id: "p3", title: "Brand Refresh", short: "Visual identity & brand guidelines", url: "https://pragatisharma.in/brand-refresh", type: "brand" }
   ];
+
+  function postClose() {
+    if (typeof window !== "undefined" && window.parent) {
+      window.parent.postMessage({ type: "close-assistant" }, "*");
+    }
+  }
 
   return (
     <div style={{
-      position: "fixed",
-      inset: 0,
+      height: "100vh",
+      width: "100%",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: "rgba(2,6,23,0.45)",
-      zIndex: 9999,
-      padding: 20
+      background: "transparent"
     }}>
       <div style={{
-        width: 820,
-        maxWidth: "100%",
-        height: "82vh",
-        background: "#fff",
+        width: "92%",
+        maxWidth: 1180,
+        height: "86vh",
         borderRadius: 18,
         overflow: "hidden",
-        boxShadow: "0 30px 80px rgba(2,6,23,0.3)",
+        background: "#fbfeff",
+        boxShadow: "0 40px 120px rgba(2,6,23,0.12)",
         display: "flex",
         flexDirection: "column"
       }}>
-        <div style={{ padding: 14, borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <strong style={{ fontSize: 16 }}>Pragati's Assistant</strong>
-          <button onClick={() => window.close?.()} style={{ border: "none", background: "transparent", fontSize: 18, cursor: "pointer" }}>✕</button>
+        <div style={{ padding: 18, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(10,20,40,0.03)" }}>
+          <div style={{ fontFamily: "'Pangaia', 'Poppins', sans-serif", fontSize: 18, fontWeight: 600, color: "#0f80d9" }}>Pragati's Assistant</div>
+          <div>
+            <button onClick={postClose} style={{ background: "transparent", border: "none", fontSize: 22, cursor: "pointer" }} aria-label="Close">✕</button>
+          </div>
         </div>
 
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, overflow: "auto" }}>
           <ChatAssistant projects={projects} />
         </div>
       </div>
