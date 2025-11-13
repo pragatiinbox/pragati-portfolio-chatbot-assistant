@@ -2,11 +2,10 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant — footer layout stabilized
- * - fixed input/button heights to avoid layout shifts when focused or when chat grows
- * - use box-sizing: border-box to make borders/shadows not affect layout size
- * - use box-shadow for focus visuals (no border width changes)
- * - footer stays absolute inside modal body, chat scrolls properly
+ * ChatAssistant — sticky-footer-inside-scroll-container implementation
+ * - messages + footer live inside the same scroll container
+ * - footer uses position: sticky; bottom: 0 so it never leaves the modal
+ * - fixed input/button sizes and box-sizing to avoid layout shifts
  */
 
 const BRAND = {
@@ -40,6 +39,7 @@ function findFaq(text) {
   return null;
 }
 
+/* Small inline icons (fallback) */
 function IconMic({ stroke = BRAND.blue, size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -82,7 +82,7 @@ export default function ChatAssistant({ projects = [] }) {
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
-  const scrollRef = useRef(null);
+  const scrollRef = useRef(null); // this is the scroll container ref (contains messages + footer)
   const recRef = useRef(null);
 
   useEffect(() => {
@@ -100,8 +100,10 @@ export default function ChatAssistant({ projects = [] }) {
     recRef.current = r;
   }, []);
 
+  // auto-scroll to bottom on message change
   useEffect(() => {
     if (!scrollRef.current) return;
+    // scroll to bottom of scroll container
     setTimeout(() => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }, 40);
@@ -151,31 +153,37 @@ export default function ChatAssistant({ projects = [] }) {
 
   const groups = groupMessages(messages);
 
-  /* stable footer styles: fixed heights, box-sizing, no border-change on focus */
+  // styles
   const styles = {
-    container: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)", boxSizing: "border-box" },
+    shell: { height: "100%", display: "flex", flexDirection: "column", background: BRAND.pale, fontFamily: "var(--font-body)", boxSizing: "border-box" },
 
-    scrollArea: {
+    // IMPORTANT: this is the scroll container that contains both messages AND footer
+    scrollContainer: {
       height: "100%",
       overflowY: "auto",
       padding: 32,
-      paddingBottom: BRAND.footerHeightPx + 32,
-      boxSizing: "border-box"
+      paddingBottom: 12,
+      boxSizing: "border-box",
+      position: "relative",
+      WebkitOverflowScrolling: "touch"
     },
 
-    messagesWrap: { display: "flex", flexDirection: "column", gap: 12 },
+    messagesWrap: { display: "flex", flexDirection: "column", gap: 12, paddingBottom: 24 },
 
     groupLeft: { alignSelf: "flex-start", background: "#f7fbff", color: BRAND.text, padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 6px 18px rgba(10,20,40,0.03)", boxSizing: "border-box" },
     groupRight: { alignSelf: "flex-end", background: BRAND.blue, color: "#fff", padding: "10px 14px", borderRadius: 12, maxWidth: "78%", boxShadow: "0 8px 24px rgba(15,128,217,0.12)", boxSizing: "border-box" },
 
-    footerOuter: {
-      position: "absolute",
+    // footer is sticky INSIDE the scroll container
+    footerWrapper: {
+      position: "sticky",
+      bottom: 0,
       left: 0,
       right: 0,
-      bottom: 0,
+      zIndex: 20,
       display: "flex",
       justifyContent: "center",
-      padding: "18px 0 26px",
+      paddingTop: 12,
+      paddingBottom: 8,
       boxSizing: "border-box"
     },
 
@@ -193,12 +201,10 @@ export default function ChatAssistant({ projects = [] }) {
     },
 
     suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 0 },
-
     suggestionBtn: { padding: "10px 14px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`, background: "#fff", cursor: "pointer", fontSize: 14, boxSizing: "border-box" },
 
     inputRow: { display: "flex", gap: 12, alignItems: "center", boxSizing: "border-box" },
 
-    // FIXED height input and explicit box-sizing — avoids layout change on focus
     input: {
       flex: 1,
       height: 48,
@@ -209,10 +215,9 @@ export default function ChatAssistant({ projects = [] }) {
       boxSizing: "border-box",
       outline: "none",
       background: "#fff",
-      transition: "box-shadow 160ms ease, transform 160ms ease"
+      transition: "box-shadow 160ms ease"
     },
 
-    // mic and send fixed sizes
     micBtn: {
       width: 48,
       height: 48,
@@ -242,16 +247,24 @@ export default function ChatAssistant({ projects = [] }) {
       boxShadow: "0 10px 30px rgba(15,128,217,0.16)"
     },
 
-    // Focus styles use shadow (no border width change)
-    focusStyle: {
-      boxShadow: `0 0 0 6px rgba(15,128,217,0.06), 0 6px 20px rgba(15,128,217,0.08)`
-    }
+    focusShadow: { boxShadow: `0 0 0 6px rgba(15,128,217,0.06), 0 6px 20px rgba(15,128,217,0.08)` }
   };
 
   return (
-    <div style={styles.container}>
-      <div ref={scrollRef} style={styles.scrollArea} aria-live="polite">
-        <div style={{ height: 6 }} />
+    <div style={styles.shell}>
+      {/* scroll container: contains messages + sticky footer */}
+      <div ref={scrollRef} style={styles.scrollContainer} aria-live="polite">
+        {/* initial hero/messages area */}
+        {messages.length <= 2 && (
+          <div style={{ textAlign: "left", marginBottom: 8 }}>
+            <div style={{ display: "inline-block", background: "#f7fbff", padding: "10px 14px", borderRadius: 12, boxShadow: "0 18px 40px rgba(10,20,40,0.04)" }}>
+              <div style={{ fontFamily: "var(--font-body)", color: BRAND.text }}>
+                Hey there! Can I help you with anything?
+                <div style={{ marginTop: 8, color: BRAND.muted, fontSize: 14 }}>Ready to assist you with anything you need.</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div style={styles.messagesWrap}>
           {groups.map((g, gi) => {
@@ -265,39 +278,42 @@ export default function ChatAssistant({ projects = [] }) {
             );
           })}
         </div>
-      </div>
 
-      <div style={styles.footerOuter} aria-hidden={false}>
-        <div style={styles.footerBox}>
-          {showSuggestions && <div style={styles.suggestionsRow}>
-            {SUGGESTIONS.map((s, i) => (
-              <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn}>
-                <span style={{ marginRight: 8 }}>{s.emoji}</span>
-                <span>{s.text}</span>
+        {/* STICKY FOOTER inside this scroll container */}
+        <div style={styles.footerWrapper}>
+          <div style={styles.footerBox}>
+            {showSuggestions && (
+              <div style={styles.suggestionsRow}>
+                {SUGGESTIONS.map((s, i) => (
+                  <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn}>
+                    <span style={{ marginRight: 8 }}>{s.emoji}</span>
+                    <span>{s.text}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <form onSubmit={onSubmit} style={styles.inputRow}>
+              <input
+                aria-label="Ask anything you need"
+                placeholder="Ask anything you need"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                style={styles.input}
+                onFocus={(e) => (e.currentTarget.style.boxShadow = styles.focusShadow.boxShadow)}
+                onBlur={(e) => (e.currentTarget.style.boxShadow = "none")}
+              />
+
+              <button type="button" onClick={toggleMic} title="Speak" style={styles.micBtn} aria-label="Speak">
+                <IconMic />
               </button>
-            ))}
-          </div>}
 
-          <form onSubmit={onSubmit} style={styles.inputRow}>
-            <input
-              aria-label="Ask anything you need"
-              placeholder="Ask anything you need"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              style={styles.input}
-              onFocus={(e) => e.currentTarget.style.boxShadow = styles.focusStyle.boxShadow}
-              onBlur={(e) => e.currentTarget.style.boxShadow = "none"}
-            />
-
-            <button type="button" onClick={toggleMic} title="Speak" style={styles.micBtn} aria-label="Speak">
-              <IconMic />
-            </button>
-
-            <button type="submit" style={styles.sendBtn} aria-label="Send">
-              <span style={{ fontWeight: 700 }}>Send</span>
-              <IconSend />
-            </button>
-          </form>
+              <button type="submit" style={styles.sendBtn} aria-label="Send">
+                <span style={{ fontWeight: 700 }}>Send</span>
+                <IconSend />
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
