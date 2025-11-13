@@ -2,51 +2,56 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Styled ChatAssistant to visually match Pragati's portfolio look & feel.
- * - Overwrites THEME at top to match portfolio colors, radii, shadows.
- * - Background uses a subtle dotted-grid pattern to echo the portfolio.
- * - Edit FAQS for your exact canned answers.
+ * ChatAssistant (Pangaia/Poppins style, brand blue #0f80d9)
+ *
+ * - Replace your current components/ChatAssistant.jsx with this file.
+ * - If you want the exact PANGAIA font, see the @font-face instructions below.
+ * - Uses inline Feather-like SVG icons (no external icon lib).
  */
 
-const THEME = {
-  // visual palette tuned to match the screenshot you provided
-  headlineBlue: "#2b6de6",   // main bright blue (headings)
-  softBlue: "#e9f3ff",       // pale tile blue
-  softYellow: "#fff6d8",     // pale butter tile
-  warmAccent: "#f6b93b",     // warm accent (buttons/CTA)
-  cardBg: "#fbfdff",         // card surface
-  text: "#0b1220",
+const BRAND = {
+  blue: "#0f80d9",
+  bg: "#ffffff",
+  softGray: "#f6f7f9",
+  text: "#061425",
   muted: "#6b7280",
   radius: 18,
-  shadowSoft: "0 10px 30px rgba(15, 23, 42, 0.06)",
-  shadowDeep: "0 30px 80px rgba(2,6,23,0.12)"
+  shadow: "0 30px 80px rgba(2,6,23,0.08)"
 };
 
-// small FAQ repository — edit these to sound like you
+// suggested questions — edit these lines to change the wording
+const SUGGESTED = [
+  { key: "mobile", text: "Show me your best mobile project", icon: "📱" },
+  { key: "research", text: "How do you approach research?", icon: "🔬" },
+  { key: "tools", text: "Which tools do you use?", icon: "🧰" },
+  { key: "about", text: "Who is Pragati?", icon: "👋" }
+];
+
+// small FAQ repository; update/add entries to match your voice
 const FAQS = [
   {
-    keys: ["what tools", "tools do you use", "what tools do you use"],
+    keys: ["what tools", "tools do you use", "which tools"],
     answer:
-      "I design in Figma for UI and flows, use Protopie for interactions, and run usability sessions with Maze. I keep docs in Notion."
+      "I primarily use Figma for UI, Protopie for interactions, FigJam for workshops and Notion for documentation. I validate with Maze."
   },
   {
     keys: ["design process", "process", "how do you design"],
     answer:
-      "Research → Sketch → Prototype → Validate. I prioritise hypotheses, prototype fast, and test with real users before iterating."
+      "Research → sketch → prototype → validate. I prioritise high-risk hypotheses and test with quick prototypes to reduce uncertainty."
   },
   {
-    keys: ["hiring", "hire", "recruiter"],
+    keys: ["who is pragati", "who is pragati sharma", "about pragati"],
     answer:
-      "For hiring, I highlight impact: metrics, outcomes, and ownership. Ask me to show 2–3 projects perfect for recruitment conversations."
+      "Pragati Sharma — Product Designer creating scalable, empathetic design systems. Check out her case studies linked above."
   },
   {
-    keys: ["contact", "reach you", "email"],
+    keys: ["experience", "industry", "worked"],
     answer:
-      "You can email Pragati at hi@pragatisharma.in — or ask me to open a specific case study and I'll link it."
+      "I've worked across fintech, telecom and SaaS with a focus on measurable outcomes (conversion, retention, task success)."
   }
 ];
 
-function findFaqReply(text) {
+function findFaq(text) {
   const t = (text || "").toLowerCase();
   for (const f of FAQS) {
     for (const k of f.keys) {
@@ -56,87 +61,119 @@ function findFaqReply(text) {
   return null;
 }
 
-export default function ChatAssistant({ projects = [], onClose = () => {} }) {
-  // initial greeting matches portfolio voice — now asks role immediately
+/* Inline Feather-like SVGs */
+function IconMic() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 1v11" stroke={BRAND.blue} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M19 11a7 7 0 01-14 0" stroke={BRAND.blue} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 21v-4" stroke={BRAND.blue} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+function IconSend() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M22 2L11 13" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M22 2L15 22l-3-9-9-3 19-7z" fill={BRAND.blue} opacity="0.06"/>
+    </svg>
+  );
+}
+
+export default function ChatAssistant({ projects = [] }) {
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hello — welcome! Who are you visiting as today?" }
+    { role: "assistant", text: "Hey there — can I help you with anything?" },
+    { role: "assistant-sub", text: "Ready to assist you with anything you need." }
   ]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
-  const recognitionRef = useRef(null);
-  const [stage, setStage] = useState("askRole");
+  const [stage, setStage] = useState("intro");
+  const recRef = useRef(null);
   const containerRef = useRef(null);
 
   // speech recognition (Chrome)
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
-    const rec = new SpeechRecognition();
-    rec.lang = "en-US";
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.onresult = (e) => {
-      const transcript = e.results[0][0].transcript;
-      setInput(prev => (prev ? prev + " " + transcript : transcript));
+    const r = new SpeechRecognition();
+    r.lang = "en-US";
+    r.interimResults = false;
+    r.maxAlternatives = 1;
+    r.onresult = (e) => {
+      const t = e.results[0][0].transcript;
+      setInput(prev => (prev ? prev + " " + t : t));
     };
-    rec.onend = () => setListening(false);
-    recognitionRef.current = rec;
+    r.onend = () => setListening(false);
+    recRef.current = r;
   }, []);
 
-  // autoscroll
   useEffect(() => {
     if (!containerRef.current) return;
     containerRef.current.scrollTop = containerRef.current.scrollHeight;
   }, [messages]);
 
-  // speak using browser TTS
   function speak(text) {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-US";
-    // slightly slower for friendly tone
     u.rate = 0.98;
     window.speechSynthesis.speak(u);
   }
 
-  function addMessage(msg) {
-    setMessages(m => [...m, msg]);
+  function addMessage(m) {
+    setMessages(prev => [...prev, m]);
   }
 
-  // projects fallback to placeholders if none passed
-  function suggestForRole(role) {
-    const list = projects.length ? projects : [
-      { id: "p1", title: "Mobile Checkout Redesign", short: "Checkout flow & microinteractions", url: "https://pragatisharma.in/mobile-checkout", type: "mobile" },
-      { id: "p2", title: "B2B Dashboard", short: "Data-heavy dashboard & analytics", url: "https://pragatisharma.in/b2b-dashboard", type: "web" },
-      { id: "p3", title: "Brand Refresh", short: "Visual identity & brand guidelines", url: "https://pragatisharma.in/brand-refresh", type: "brand" }
-    ];
-
-    if (role === "recruiter") return list.filter(p => p.type !== "brand").slice(0, 3);
-    if (role === "designer") return list.filter(p => p.type === "system" || p.type === "brand").slice(0, 3);
-    return list.slice(0, 3);
-  }
-
-  function chooseRole(role) {
-    addMessage({ role: "user", text: role });
-    const greeting = `Great — you're visiting as a ${role}. Here are a few projects you might like:`;
-    addMessage({ role: "assistant", text: greeting });
-    const recs = suggestForRole(role);
-    recs.forEach(r => addMessage({ role: "assistant", text: `• ${r.title} — ${r.short} (${r.url})` }));
-    speak(greeting);
-    setStage("chat");
+  function handleSuggested(s) {
+    addMessage({ role: "user", text: s.text });
+    // check FAQ
+    const faq = findFaq(s.text);
+    if (faq) {
+      addMessage({ role: "assistant", text: faq });
+      speak(faq);
+      return;
+    }
+    // canned behaviour per suggestion key
+    if (s.key === "mobile") {
+      const txt = `My top mobile project is "Mobile Checkout Redesign" — Checkout flow & microinteractions. View: https://pragatisharma.in/mobile-checkout`;
+      addMessage({ role: "assistant", text: txt });
+      speak(txt);
+      return;
+    }
+    if (s.key === "research") {
+      const txt = "I start with stakeholder interviews, map assumptions, then run 2–3 rapid tests to validate direction.";
+      addMessage({ role: "assistant", text: txt });
+      speak(txt);
+      return;
+    }
+    if (s.key === "tools") {
+      const txt = "Figma, Protopie, FigJam, Notion, Maze. I pick tools based on fidelity & research needs.";
+      addMessage({ role: "assistant", text: txt });
+      speak(txt);
+      return;
+    }
+    if (s.key === "about") {
+      const txt = "Pragati Sharma is a product designer crafting scalable product experiences. Check case studies linked on the site.";
+      addMessage({ role: "assistant", text: txt });
+      speak(txt);
+      return;
+    }
+    // fallback
+    addMessage({ role: "assistant", text: "Thanks — I got that. Ask me to open a case study or request more details." });
+    speak("Thanks — I got that.");
   }
 
   function toggleMic() {
-    if (!recognitionRef.current) {
-      alert("Speech recognition not supported by this browser.");
+    if (!recRef.current) {
+      alert("Speech recognition not supported in this browser (try Chrome).");
       return;
     }
     if (listening) {
-      recognitionRef.current.stop();
+      recRef.current.stop();
       setListening(false);
     } else {
-      recognitionRef.current.start();
+      recRef.current.start();
       setListening(true);
     }
   }
@@ -145,157 +182,134 @@ export default function ChatAssistant({ projects = [], onClose = () => {} }) {
     e.preventDefault();
     if (!input.trim()) return;
     addMessage({ role: "user", text: input });
-
-    // check FAQ repository first
-    const faq = findFaqReply(input);
+    // FAQ check
+    const faq = findFaq(input);
     if (faq) {
       addMessage({ role: "assistant", text: faq });
       speak(faq);
       setInput("");
       return;
     }
-
-    // keyword-based helpful replies
+    // simple keyword fallback: open project if user asks
     const lower = input.toLowerCase();
-    if (lower.includes("mobile") && lower.includes("best")) {
-      const recs = suggestForRole("designer");
-      const txt = `My top mobile project is ${recs[0].title} — ${recs[0].short} (${recs[0].url})`;
+    if (lower.includes("mobile") && lower.includes("project")) {
+      const txt = `My mobile case study: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`;
       addMessage({ role: "assistant", text: txt });
       speak(txt);
       setInput("");
       return;
     }
-
-    const fallback = `I heard: "${input}". I can open a case study, give a short summary, or share hiring-friendly highlights. Try: "Show me your best mobile project" or "How do you approach research?"`;
+    // default fallback
+    const fallback = `I heard: "${input}". I can open a case study, share process notes, or provide hiring highlights.`;
     addMessage({ role: "assistant", text: fallback });
     speak(fallback);
     setInput("");
-    setStage("chat");
   }
 
-  const quickPrompts = [
-    { text: "Show me your best mobile project", bg: THEME.softBlue, handler: () => {
-      addMessage({ role: "user", text: "Show me your best mobile project" });
-      const recs = suggestForRole("designer");
-      const canned = `${recs[0].title} — ${recs[0].short} (${recs[0].url})`;
-      addMessage({ role: "assistant", text: canned });
-      speak(canned);
-    }},
-    { text: "How do you approach research?", bg: THEME.softYellow, handler: () => {
-      addMessage({ role: "user", text: "How do you approach research?" });
-      const canned = "I start with stakeholder interviews, map assumptions, and run 2–3 rapid usability tests within two weeks to validate direction.";
-      addMessage({ role: "assistant", text: canned });
-      speak(canned);
-    }},
-    { text: "What tools do you use?", bg: THEME.softBlue, handler: () => {
-      addMessage({ role: "user", text: "What tools do you use?" });
-      const canned = "Figma, Protopie, FigJam, Maze and Notion — each used depending on stage and fidelity needed.";
-      addMessage({ role: "assistant", text: canned });
-      speak(canned);
-    }}
-  ];
-
-  // styles tuned to match portfolio (dotted bg, rounded tiles, soft shadow)
-  const styles = {
-    pageBg: {
-      // dotted subtle grid similar to your portfolio
-      backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.03) 1px, transparent 1px)`,
-      backgroundSize: "20px 20px",
-      backgroundColor: "#ffffff"
-    },
-    wrapper: {
-      padding: 18,
+  return (
+    <div style={{
+      minHeight: "100%",
       display: "flex",
       flexDirection: "column",
-      height: "100%",
-      background: THEME.cardBg,
-      fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial"
-    },
-    messages: { overflowY: "auto", padding: 10, flex: 1 },
-    assistantBubble: {
-      background: "linear-gradient(180deg,#fbfdff,#f7fbff)",
-      color: THEME.text,
-      padding: "12px 16px",
-      borderRadius: THEME.radius,
-      boxShadow: THEME.shadowSoft,
-      maxWidth: "78%",
-      fontSize: 15
-    },
-    userBubble: {
-      background: THEME.headlineBlue,
-      color: "#fff",
-      padding: "12px 16px",
-      borderRadius: THEME.radius,
-      maxWidth: "78%",
-      fontSize: 15
-    },
-    quickRow: { display: "flex", gap: 10, marginBottom: 10, flexWrap: "wrap" },
-    quickBtn: (bg) => ({
-      background: bg,
-      padding: "8px 12px",
-      borderRadius: 12,
-      border: "none",
-      cursor: "pointer",
-      boxShadow: THEME.shadowSoft,
-      fontSize: 13
-    }),
-    bottomBar: { marginTop: 10 }
-  };
+      background: BRAND.blue ? BRAND?.bg : "#fff"
+    }}>
+      {/* header / big hero area */}
+      <div style={{
+        padding: 48,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 8,
+        background: "#fff"
+      }}>
+        <div style={{ width: 86, height: 86, borderRadius: 18, background: "linear-gradient(135deg, rgba(15,128,217,0.06), rgba(15,128,217,0.02))", display: "grid", placeItems: "center", boxShadow: "0 8px 30px rgba(15,128,217,0.06)" }}>
+          {/* small orb placeholder */}
+          <div style={{ width: 46, height: 46, borderRadius: 12, background: `linear-gradient(145deg, ${BRAND.blue}, #a6d9ff)`, boxShadow: "0 8px 20px rgba(15,128,217,0.08)" }} />
+        </div>
 
-  return (
-    <div style={{ ...styles.pageBg }}>
-      <div style={styles.wrapper}>
-        <div ref={containerRef} style={styles.messages}>
-          {messages.map((m, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", margin: "10px 0" }}>
-              <div style={m.role === "user" ? styles.userBubble : styles.assistantBubble}>
+        <h1 style={{ margin: 0, fontFamily: "'Pangaia', 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial", fontSize: 42, lineHeight: 1.02, color: BRAND.blue, textAlign: "center", fontWeight: 600 }}>
+          Hey there!<br/>Can I help you with anything?
+        </h1>
+
+        <p style={{ margin: 0, marginTop: 6, color: "#6b7280", textAlign: "center", fontSize: 16 }}>
+          Ready to assist you with anything you need.
+        </p>
+      </div>
+
+      {/* input area */}
+      <div style={{ padding: "36px 56px", display: "flex", flexDirection: "column", gap: 18 }}>
+        <form onSubmit={onSubmit} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <input
+            aria-label="Ask anything you need"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask anything you need"
+            style={{
+              flex: 1,
+              padding: "18px 20px",
+              borderRadius: 14,
+              border: `1px solid ${BRAND.softGray}`,
+              fontSize: 16,
+              boxShadow: "0 8px 30px rgba(10,20,40,0.04)",
+              background: "#fff",
+              outline: "none"
+            }}
+          />
+
+          <button type="button" onClick={toggleMic} title="Speak" style={{
+            display: "grid", placeItems: "center", borderRadius: 10, border: `1px solid ${BRAND.softGray}`, padding: 10, background: "#fff", cursor: "pointer", boxShadow: "0 6px 18px rgba(10,20,40,0.04)"
+          }}>
+            <IconMic />
+          </button>
+
+          <button type="submit" title="Send" style={{
+            display: "flex", gap: 8, alignItems: "center", background: BRAND.blue, color: "#fff", border: "none", padding: "12px 18px", borderRadius: 12, cursor: "pointer", boxShadow: "0 10px 30px rgba(15,128,217,0.18)"
+          }}>
+            <span style={{ fontWeight: 600 }}>Send</span>
+            <IconSend />
+          </button>
+        </form>
+
+        {/* suggested questions row */}
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
+          {SUGGESTED.map((s, i) => (
+            <button key={i} onClick={() => handleSuggested(s)} style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 14px",
+              borderRadius: 14,
+              border: `1px solid ${BRAND.softGray}`,
+              background: "#fff",
+              cursor: "pointer",
+              fontSize: 14,
+              color: BRAND.text,
+              boxShadow: "0 8px 24px rgba(10,20,40,0.04)"
+            }}>
+              <span style={{ fontSize: 16 }}>{s.icon}</span>
+              <span>{s.text}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* conversation area (light) */}
+        <div ref={containerRef} style={{ marginTop: 8, padding: 12, borderRadius: 14, background: "#fff", minHeight: 180, boxShadow: "inset 0 1px 0 rgba(10,20,40,0.02)" }}>
+          {messages.map((m, idx) => (
+            <div key={idx} style={{ marginBottom: 12, display: "flex", flexDirection: m.role === "user" ? "row-reverse" : "row", alignItems: "flex-start", gap: 12 }}>
+              <div style={{
+                maxWidth: "78%",
+                padding: "12px 14px",
+                borderRadius: 12,
+                background: m.role === "user" ? BRAND.blue : "#f8fbff",
+                color: m.role === "user" ? "#fff" : BRAND.text,
+                boxShadow: "0 6px 18px rgba(10,20,40,0.04)"
+              }}>
                 {m.text}
               </div>
-              {m.role === "assistant" && m.text && (
-                <button onClick={() => speak(m.text)} style={{ marginLeft: 8, border: "none", background: "transparent", cursor: "pointer", fontSize: 18 }}>🔊</button>
-              )}
             </div>
           ))}
         </div>
 
-        <div style={styles.bottomBar}>
-          <div style={styles.quickRow}>
-            {quickPrompts.map((p, idx) => (
-              <button key={idx} onClick={p.handler} style={styles.quickBtn(p.bg || THEME.softBlue)}>
-                {p.text}
-              </button>
-            ))}
-          </div>
-
-          {stage === "askRole" && (
-            <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-              <button onClick={() => chooseRole("recruiter")} style={{ padding: "10px 12px", borderRadius: 12, border: "none", cursor: "pointer", background: THEME.softBlue }}>I'm a recruiter</button>
-              <button onClick={() => chooseRole("designer")} style={{ padding: "10px 12px", borderRadius: 12, border: "none", cursor: "pointer", background: THEME.softYellow }}>I'm a designer</button>
-              <button onClick={() => chooseRole("curious")} style={{ padding: "10px 12px", borderRadius: 12, border: "none", cursor: "pointer", background: "#fff", border: `1px solid ${THEME.softBlue}` }}>Just curious</button>
-            </div>
-          )}
-
-          <form onSubmit={onSubmit} style={{ display: "flex", gap: 10 }}>
-            <button type="button" onClick={toggleMic} style={{ padding: "10px", borderRadius: 12, border: "none", background: THEME.headlineBlue, color: "#fff", cursor: "pointer" }}>
-              {listening ? "Stop 🎙️" : "Speak 🎙️"}
-            </button>
-
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question or type your message..."
-              style={{ flex: 1, padding: "12px", borderRadius: 12, border: `1px solid #e6eefc`, fontSize: 15 }}
-            />
-
-            <button type="submit" style={{ padding: "10px 14px", borderRadius: 12, background: THEME.warmAccent, border: "none", cursor: "pointer", color: "#0b1220" }}>
-              Send
-            </button>
-          </form>
-
-          <div style={{ marginTop: 10, fontSize: 12, color: THEME.muted }}>
-            Tip: try "Show me your best mobile project" or pick a role above.
-          </div>
-        </div>
       </div>
     </div>
   );
