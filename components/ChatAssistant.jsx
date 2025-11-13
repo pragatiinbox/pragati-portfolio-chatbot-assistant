@@ -2,52 +2,55 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * ChatAssistant (Pangaia/Poppins style, brand blue #0f80d9)
- *
- * - Replace your current components/ChatAssistant.jsx with this file.
- * - If you want the exact PANGAIA font, see the @font-face instructions below.
- * - Uses inline Feather-like SVG icons (no external icon lib).
+ * Final ChatAssistant component
+ * - Feather inline SVG icons
+ * - Headings use Pangaia (bold); body uses Poppins
+ * - Brand blue: #0f80d9
+ * - Suggested chips include emojis + small feather icon when appropriate
+ * - Conversation area below input
  */
 
 const BRAND = {
   blue: "#0f80d9",
   bg: "#ffffff",
-  softGray: "#f6f7f9",
+  pale: "#fbfeff",
+  softGray: "#f3f6fa",
   text: "#061425",
   muted: "#6b7280",
   radius: 18,
-  shadow: "0 30px 80px rgba(2,6,23,0.08)"
+  shadowSoft: "0 12px 36px rgba(15, 128, 217, 0.06)",
+  shadowDeep: "0 30px 80px rgba(2,6,23,0.12)"
 };
 
-// suggested questions — edit these lines to change the wording
-const SUGGESTED = [
-  { key: "mobile", text: "Show me your best mobile project", icon: "📱" },
-  { key: "research", text: "How do you approach research?", icon: "🔬" },
-  { key: "tools", text: "Which tools do you use?", icon: "🧰" },
-  { key: "about", text: "Who is Pragati?", icon: "👋" }
+// Suggested buttons — you can edit text or emoji here
+const SUGGESTIONS = [
+  { key: "mobile", text: "Show me your best mobile project", emoji: "📱", icon: "smartphone" },
+  { key: "research", text: "How do you approach research?", emoji: "🔬", icon: "flask" },
+  { key: "tools", text: "Which tools do you use?", emoji: "🧰", icon: "tool" },
+  { key: "about", text: "Who is Pragati?", emoji: "👋", icon: "user" }
 ];
 
-// small FAQ repository; update/add entries to match your voice
+// Small FAQ repository; edit to write your voice
 const FAQS = [
   {
     keys: ["what tools", "tools do you use", "which tools"],
     answer:
-      "I primarily use Figma for UI, Protopie for interactions, FigJam for workshops and Notion for documentation. I validate with Maze."
+      "I primarily use Figma for UI, Protopie for interactions, FigJam for workshops, and Notion for documentation. I validate designs with Maze usability tests."
   },
   {
     keys: ["design process", "process", "how do you design"],
     answer:
-      "Research → sketch → prototype → validate. I prioritise high-risk hypotheses and test with quick prototypes to reduce uncertainty."
+      "Research → sketch → prototype → validate. I prioritise hypotheses, prototype quickly, and test with real users before iterating."
   },
   {
     keys: ["who is pragati", "who is pragati sharma", "about pragati"],
     answer:
-      "Pragati Sharma — Product Designer creating scalable, empathetic design systems. Check out her case studies linked above."
+      "Pragati Sharma is a product designer focused on scalable, empathetic design systems. Her case studies highlight impact and outcomes."
   },
   {
     keys: ["experience", "industry", "worked"],
     answer:
-      "I've worked across fintech, telecom and SaaS with a focus on measurable outcomes (conversion, retention, task success)."
+      "I've worked across fintech, telecom and SaaS with a focus on measurable outcomes such as conversion uplift, retention, and decreased task time."
   }
 ];
 
@@ -61,33 +64,82 @@ function findFaq(text) {
   return null;
 }
 
-/* Inline Feather-like SVGs */
-function IconMic() {
+/* Feather inline icons */
+function IconMic({ stroke = BRAND.blue, size = 18 }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M12 1v11" stroke={BRAND.blue} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M19 11a7 7 0 01-14 0" stroke={BRAND.blue} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M12 21v-4" stroke={BRAND.blue} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M12 1v11" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M19 11a7 7 0 01-14 0" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 21v-4" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
-function IconSend() {
+function IconSend({ stroke = "#fff", size = 16 }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M22 2L11 13" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M22 2L15 22l-3-9-9-3 19-7z" fill={BRAND.blue} opacity="0.06"/>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M22 2L11 13" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M22 2L15 22l-3-9-9-3 19-7z" stroke={stroke} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.06" />
+    </svg>
+  );
+}
+function IconSmartphone({ stroke = BRAND.blue, size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="7" y="2" width="10" height="20" rx="2" stroke={stroke} strokeWidth="1.6" />
+      <path d="M11 18h2" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconFlask({ stroke = BRAND.blue, size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M8 2h8" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M8 7h8l-4 7v5" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function IconTool({ stroke = BRAND.blue, size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M14 2l6 6" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 14l8 8" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 21l6-6" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function IconUser({ stroke = BRAND.blue, size = 14 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="7" r="4" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function IconClose({ stroke = "#374151", size = 20 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d="M18 6L6 18" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 6l12 12" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
+/* helper: map icon key to component */
+function SuggestionIcon({ name }) {
+  if (name === "smartphone") return <IconSmartphone />;
+  if (name === "flask") return <IconFlask />;
+  if (name === "tool") return <IconTool />;
+  if (name === "user") return <IconUser />;
+  return null;
+}
+
 export default function ChatAssistant({ projects = [] }) {
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Hey there — can I help you with anything?" },
+    { role: "assistant", text: "Hey there! Can I help you with anything?" },
     { role: "assistant-sub", text: "Ready to assist you with anything you need." }
   ]);
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
-  const [stage, setStage] = useState("intro");
   const recRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -107,6 +159,7 @@ export default function ChatAssistant({ projects = [] }) {
     recRef.current = r;
   }, []);
 
+  // scroll on message change
   useEffect(() => {
     if (!containerRef.current) return;
     containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -125,43 +178,45 @@ export default function ChatAssistant({ projects = [] }) {
     setMessages(prev => [...prev, m]);
   }
 
-  function handleSuggested(s) {
+  function handleSuggestion(s) {
+    // add user message
     addMessage({ role: "user", text: s.text });
-    // check FAQ
+    // check FAQ quick match
     const faq = findFaq(s.text);
     if (faq) {
       addMessage({ role: "assistant", text: faq });
       speak(faq);
       return;
     }
-    // canned behaviour per suggestion key
+    // canned outputs by key
     if (s.key === "mobile") {
-      const txt = `My top mobile project is "Mobile Checkout Redesign" — Checkout flow & microinteractions. View: https://pragatisharma.in/mobile-checkout`;
+      const txt = `My top mobile project: Mobile Checkout Redesign — Checkout flow & microinteractions. View: https://pragatisharma.in/mobile-checkout`;
       addMessage({ role: "assistant", text: txt });
       speak(txt);
       return;
     }
     if (s.key === "research") {
-      const txt = "I start with stakeholder interviews, map assumptions, then run 2–3 rapid tests to validate direction.";
+      const txt = "I start with stakeholder interviews, map assumptions, and run 2–3 rapid tests to validate direction.";
       addMessage({ role: "assistant", text: txt });
       speak(txt);
       return;
     }
     if (s.key === "tools") {
-      const txt = "Figma, Protopie, FigJam, Notion, Maze. I pick tools based on fidelity & research needs.";
+      const txt = "Figma, Protopie, FigJam, Notion, Maze — chosen per stage and fidelity.";
       addMessage({ role: "assistant", text: txt });
       speak(txt);
       return;
     }
     if (s.key === "about") {
-      const txt = "Pragati Sharma is a product designer crafting scalable product experiences. Check case studies linked on the site.";
+      const txt = "Pragati Sharma is a product designer creating thoughtful, scalable product experiences. Check her case studies on the site.";
       addMessage({ role: "assistant", text: txt });
       speak(txt);
       return;
     }
     // fallback
-    addMessage({ role: "assistant", text: "Thanks — I got that. Ask me to open a case study or request more details." });
-    speak("Thanks — I got that.");
+    const fallback = "Thanks — I got that. Ask me to open a case study or request a short summary.";
+    addMessage({ role: "assistant", text: fallback });
+    speak(fallback);
   }
 
   function toggleMic() {
@@ -179,10 +234,10 @@ export default function ChatAssistant({ projects = [] }) {
   }
 
   function onSubmit(e) {
-    e.preventDefault();
+    e?.preventDefault();
     if (!input.trim()) return;
     addMessage({ role: "user", text: input });
-    // FAQ check
+
     const faq = findFaq(input);
     if (faq) {
       addMessage({ role: "assistant", text: faq });
@@ -190,7 +245,7 @@ export default function ChatAssistant({ projects = [] }) {
       setInput("");
       return;
     }
-    // simple keyword fallback: open project if user asks
+
     const lower = input.toLowerCase();
     if (lower.includes("mobile") && lower.includes("project")) {
       const txt = `My mobile case study: Mobile Checkout Redesign — https://pragatisharma.in/mobile-checkout`;
@@ -199,117 +254,140 @@ export default function ChatAssistant({ projects = [] }) {
       setInput("");
       return;
     }
-    // default fallback
-    const fallback = `I heard: "${input}". I can open a case study, share process notes, or provide hiring highlights.`;
+
+    const fallback = `I heard: "${input}". I can open a case study, give a short summary, or share hiring highlights.`;
     addMessage({ role: "assistant", text: fallback });
     speak(fallback);
     setInput("");
   }
 
-  return (
-    <div style={{
+  /* styles (JS-in-CSS for simplicity) */
+  const styles = {
+    root: {
       minHeight: "100%",
+      background: BRAND.pale,
       display: "flex",
       flexDirection: "column",
-      background: BRAND.blue ? BRAND?.bg : "#fff"
-    }}>
-      {/* header / big hero area */}
-      <div style={{
-        padding: 48,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 8,
-        background: "#fff"
-      }}>
-        <div style={{ width: 86, height: 86, borderRadius: 18, background: "linear-gradient(135deg, rgba(15,128,217,0.06), rgba(15,128,217,0.02))", display: "grid", placeItems: "center", boxShadow: "0 8px 30px rgba(15,128,217,0.06)" }}>
-          {/* small orb placeholder */}
-          <div style={{ width: 46, height: 46, borderRadius: 12, background: `linear-gradient(145deg, ${BRAND.blue}, #a6d9ff)`, boxShadow: "0 8px 20px rgba(15,128,217,0.08)" }} />
+      fontFamily: "var(--font-body)"
+    },
+    hero: {
+      padding: "40px 48px",
+      textAlign: "center",
+      background: `linear-gradient(180deg, rgba(15,128,217,0.04), rgba(15,128,217,0.01))`
+    },
+    orb: {
+      width: 92,
+      height: 92,
+      borderRadius: 20,
+      display: "grid",
+      placeItems: "center",
+      margin: "0 auto 18px",
+      background: `linear-gradient(135deg, rgba(15,128,217,0.08), rgba(15,128,217,0.02))`,
+      boxShadow: "0 12px 36px rgba(15,128,217,0.06)"
+    },
+    title: {
+      margin: 0,
+      fontFamily: "var(--font-heading)",
+      fontSize: 44,
+      lineHeight: 1.02,
+      color: BRAND.blue,
+      fontWeight: 700
+    },
+    subtitle: { marginTop: 8, color: BRAND.muted, fontSize: 16 },
+    inputArea: { padding: "32px 56px", display: "flex", flexDirection: "column", gap: 18 },
+    formRow: { display: "flex", gap: 12, alignItems: "center" },
+    input: {
+      flex: 1,
+      padding: "18px 20px",
+      borderRadius: 14,
+      border: `1px solid ${BRAND.softGray}`,
+      fontSize: 16,
+      background: "#fff",
+      boxShadow: "0 8px 30px rgba(10,20,40,0.04)",
+      outline: "none"
+    },
+    micBtn: {
+      display: "grid", placeItems: "center",
+      borderRadius: 12, border: `1px solid ${BRAND.softGray}`, padding: 10,
+      background: "#fff", cursor: "pointer", boxShadow: "0 6px 18px rgba(10,20,40,0.04)"
+    },
+    sendBtn: {
+      display: "flex", gap: 8, alignItems: "center",
+      background: BRAND.blue, color: "#fff", border: "none",
+      padding: "12px 18px", borderRadius: 12, cursor: "pointer",
+      boxShadow: "0 10px 30px rgba(15,128,217,0.18)"
+    },
+    suggestionsRow: { display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 },
+    suggestionBtn: {
+      display: "inline-flex", alignItems: "center", gap: 10,
+      padding: "10px 14px", borderRadius: 14, border: `1px solid ${BRAND.softGray}`,
+      background: "#fff", cursor: "pointer", fontSize: 14, color: BRAND.text,
+      boxShadow: "0 8px 24px rgba(10,20,40,0.04)"
+    },
+    conversation: {
+      marginTop: 12, padding: 12, borderRadius: 14, background: "#fff",
+      minHeight: 220, boxShadow: "inset 0 1px 0 rgba(10,20,40,0.02)", overflow: "auto"
+    },
+    bubbleUser: {
+      maxWidth: "78%", padding: "12px 14px", borderRadius: 12, background: BRAND.blue, color: "#fff"
+    },
+    bubbleAssistant: {
+      maxWidth: "78%", padding: "12px 14px", borderRadius: 12, background: "#f7fbff", color: BRAND.text
+    }
+  };
+
+  return (
+    <div style={styles.root}>
+      <div style={styles.hero}>
+        <div style={styles.orb}>
+          <div style={{ width: 50, height: 50, borderRadius: 12, background: `linear-gradient(145deg, ${BRAND.blue}, #a6d9ff)` }} />
         </div>
 
-        <h1 style={{ margin: 0, fontFamily: "'Pangaia', 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial", fontSize: 42, lineHeight: 1.02, color: BRAND.blue, textAlign: "center", fontWeight: 600 }}>
-          Hey there!<br/>Can I help you with anything?
-        </h1>
-
-        <p style={{ margin: 0, marginTop: 6, color: "#6b7280", textAlign: "center", fontSize: 16 }}>
-          Ready to assist you with anything you need.
-        </p>
+        <h1 style={styles.title}>Hey there!<br />Can I help you with anything?</h1>
+        <p style={styles.subtitle}>Ready to assist you with anything you need.</p>
       </div>
 
-      {/* input area */}
-      <div style={{ padding: "36px 56px", display: "flex", flexDirection: "column", gap: 18 }}>
-        <form onSubmit={onSubmit} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={styles.inputArea}>
+        <form onSubmit={onSubmit} style={styles.formRow}>
           <input
             aria-label="Ask anything you need"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask anything you need"
-            style={{
-              flex: 1,
-              padding: "18px 20px",
-              borderRadius: 14,
-              border: `1px solid ${BRAND.softGray}`,
-              fontSize: 16,
-              boxShadow: "0 8px 30px rgba(10,20,40,0.04)",
-              background: "#fff",
-              outline: "none"
-            }}
+            style={styles.input}
           />
 
-          <button type="button" onClick={toggleMic} title="Speak" style={{
-            display: "grid", placeItems: "center", borderRadius: 10, border: `1px solid ${BRAND.softGray}`, padding: 10, background: "#fff", cursor: "pointer", boxShadow: "0 6px 18px rgba(10,20,40,0.04)"
-          }}>
+          <button type="button" onClick={toggleMic} aria-label="Speak" style={styles.micBtn}>
             <IconMic />
           </button>
 
-          <button type="submit" title="Send" style={{
-            display: "flex", gap: 8, alignItems: "center", background: BRAND.blue, color: "#fff", border: "none", padding: "12px 18px", borderRadius: 12, cursor: "pointer", boxShadow: "0 10px 30px rgba(15,128,217,0.18)"
-          }}>
+          <button type="submit" aria-label="Send" style={styles.sendBtn}>
             <span style={{ fontWeight: 600 }}>Send</span>
             <IconSend />
           </button>
         </form>
 
-        {/* suggested questions row */}
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
-          {SUGGESTED.map((s, i) => (
-            <button key={i} onClick={() => handleSuggested(s)} style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 14px",
-              borderRadius: 14,
-              border: `1px solid ${BRAND.softGray}`,
-              background: "#fff",
-              cursor: "pointer",
-              fontSize: 14,
-              color: BRAND.text,
-              boxShadow: "0 8px 24px rgba(10,20,40,0.04)"
-            }}>
-              <span style={{ fontSize: 16 }}>{s.icon}</span>
-              <span>{s.text}</span>
+        <div style={styles.suggestionsRow}>
+          {SUGGESTIONS.map((s, i) => (
+            <button key={i} onClick={() => handleSuggestion(s)} style={styles.suggestionBtn}>
+              <span style={{ fontSize: 16 }}>{s.emoji}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <SuggestionIcon name={s.icon} />
+                <span>{s.text}</span>
+              </span>
             </button>
           ))}
         </div>
 
-        {/* conversation area (light) */}
-        <div ref={containerRef} style={{ marginTop: 8, padding: 12, borderRadius: 14, background: "#fff", minHeight: 180, boxShadow: "inset 0 1px 0 rgba(10,20,40,0.02)" }}>
+        <div ref={containerRef} style={styles.conversation}>
           {messages.map((m, idx) => (
-            <div key={idx} style={{ marginBottom: 12, display: "flex", flexDirection: m.role === "user" ? "row-reverse" : "row", alignItems: "flex-start", gap: 12 }}>
-              <div style={{
-                maxWidth: "78%",
-                padding: "12px 14px",
-                borderRadius: 12,
-                background: m.role === "user" ? BRAND.blue : "#f8fbff",
-                color: m.role === "user" ? "#fff" : BRAND.text,
-                boxShadow: "0 6px 18px rgba(10,20,40,0.04)"
-              }}>
+            <div key={idx} style={{ marginBottom: 12, display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+              <div style={m.role === "user" ? styles.bubbleUser : styles.bubbleAssistant}>
                 {m.text}
               </div>
             </div>
           ))}
         </div>
-
       </div>
     </div>
   );
