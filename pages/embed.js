@@ -24,6 +24,10 @@ export default function Embed() {
       background: "transparent"
     }}>
       <style>{`
+        :root {
+          --assistant-header-h: 84px; /* header height used by body calc */
+        }
+
         .assistant-shell {
           width: 70vw;
           height: 75vh;
@@ -35,7 +39,7 @@ export default function Embed() {
           box-shadow: 0 40px 120px rgba(2,6,23,0.12);
           display: flex;
           flex-direction: column;
-          position: relative; /* important */
+          position: relative;
         }
 
         @media (max-width: 1024px) {
@@ -50,19 +54,25 @@ export default function Embed() {
             max-width: 100%;
             max-height: 100%;
           }
-          .assistant-header { padding: 12px; }
         }
 
         .assistant-header {
-          padding: 18px;
+          height: var(--assistant-header-h);
+          min-height: var(--assistant-header-h);
+          padding: 18px 24px;
           display:flex;
           justify-content: space-between;
           align-items: center;
           border-bottom: 1px solid rgba(10,20,40,0.03);
+          background: transparent;
         }
 
-        /* IMPORTANT: assistant-body will be the relative container for chat + absolute footer */
-        .assistant-body { flex: 1; display: flex; flex-direction: column; position: relative; }
+        /* assistant-body must be constrained to remaining modal height */
+        .assistant-body {
+          height: calc(100% - var(--assistant-header-h));
+          display: block; /* body will fully contain the ChatAssistant */
+          position: relative; /* footer inside ChatAssistant will be absolute within this */
+        }
       `}</style>
 
       <div className="assistant-shell" role="dialog" aria-modal="true">
