@@ -14,10 +14,6 @@ export default function Embed() {
     }
   }
 
-  // Note: style tag below defines responsive modal size:
-  // - Desktop/tablet: width: 70vw, height: 70vh (centered)
-  // - Very wide screens: capped by max-width / max-height
-  // - Mobile (max-width: 640px): full screen (95vw x 95vh) and stacked layout
   return (
     <div style={{
       height: "100vh",
@@ -41,12 +37,10 @@ export default function Embed() {
           flex-direction: column;
         }
 
-        /* Slightly smaller (60vw) on medium screens if you'd prefer 60% */
-        @media (min-width: 1200px) and (max-width: 1600px) {
-          .assistant-shell { width: 65vw; height: 70vh; }
+        @media (max-width: 1024px) {
+          .assistant-shell { width: 90vw; height: 80vh; }
         }
 
-        /* Mobile: make it almost full-screen, stacked */
         @media (max-width: 640px) {
           .assistant-shell {
             width: 95vw;
@@ -71,11 +65,16 @@ export default function Embed() {
 
       <div className="assistant-shell" role="dialog" aria-modal="true">
         <div className="assistant-header">
-          <div style={{ fontFamily: "'Pangaia','Poppins',sans-serif", fontSize: 18, fontWeight: 600, color: "#0f80d9" }}>
+          <div style={{ fontFamily: "var(--font-heading)", fontSize: 18, fontWeight: 700, color: "#0f80d9" }}>
             Pragati's Assistant
           </div>
           <div>
-            <button onClick={postClose} style={{ background: "transparent", border: "none", fontSize: 22, cursor: "pointer" }} aria-label="Close">✕</button>
+            <button onClick={postClose} style={{ background: "transparent", border: "none", fontSize: 22, cursor: "pointer" }} aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M18 6L6 18" stroke="#374151" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M6 6l12 12" stroke="#374151" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
           </div>
         </div>
 
