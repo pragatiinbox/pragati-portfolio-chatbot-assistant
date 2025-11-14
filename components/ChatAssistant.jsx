@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 /* ---------- CONFIG ---------- */
 const BRAND = { blue: "#0f80d9", footerGap: 24 };
 
+// canned suggestions (keeps answers for quick fallback)
 const SUGGESTIONS = [
   {
     key: "mobile",
@@ -24,7 +25,7 @@ const SUGGESTIONS = [
     text: "Which tools do you use?",
     emoji: "🧰",
     answer:
-      "I use Figma for UI & systems, FigJam for whiteboards, basic prototyping in Figma + Framer for demos, and Notion/Loom for documentation."
+      "I use Figma for UI & systems, FigJam for whiteboards, and Framer for interaction demos. Notion + Loom for documentation and async updates."
   },
   {
     key: "about",
@@ -35,6 +36,9 @@ const SUGGESTIONS = [
   }
 ];
 /* ---------------------------- */
+
+/* How fast the typewriter types: milliseconds per character */
+const TYPE_SPEED = 18;
 
 /* small typing indicator */
 function TypingIndicator() {
@@ -55,21 +59,21 @@ function TypingIndicator() {
 }
 
 export default function ChatAssistant() {
-  const [faqRaw, setFaqRaw] = useState([]); // raw categories as in your file
-  const [faqFlat, setFaqFlat] = useState([]); // flattened entries: { question, answer, source, keywords (array) }
-  const [messages, setMessages] = useState([]);
+  const [faqFlat, setFaqFlat] = useState([]); // flattened entries
+  const [messages, setMessages] = useState([]); // { id, role, text }
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const middleRef = useRef(null);
 
+  // timers ref for cleanup (maps messageId -> intervalId)
+  const timersRef = useRef({});
+
+  // load faq.json and flatten (category -> qa)
   useEffect(() => {
-    // load /faq.json (your nested format)
     fetch("/faq.json")
       .then((r) => (r.ok ? r.json() : Promise.reject("no faq")))
       .then((j) => {
-        setFaqRaw(j || []);
-        // flatten into { question, answer, source?, keywords: [] }
         const flat = [];
         for (const category of (j || [])) {
           const catKeywords = Array.isArray(category.keywords) ? category.keywords.map(k => k.toLowerCase()) : [];
@@ -79,47 +83,41 @@ export default function ChatAssistant() {
               question: (qa.q || "").trim(),
               answer: (qa.a || qa.answer || "").trim(),
               source: qa.source || qa.src || "",
-              // combine category keywords + optional qa-specific keywords if present
-              keywords: [
-                ...catKeywords,
-                ...(Array.isArray(qa.keywords) ? qa.keywords.map(k => k.toLowerCase()) : [])
-              ]
+              keywords: [...catKeywords, ...(Array.isArray(qa.keywords) ? qa.keywords.map(k => k.toLowerCase()) : [])]
             });
           }
         }
         setFaqFlat(flat);
       })
-      .catch(() => {
-        setFaqRaw([]);
-        setFaqFlat([]);
-      });
+      .catch(() => setFaqFlat([]));
   }, []);
 
+  // autoscroll when messages update
   useEffect(() => {
-    // autoscroll when messages change
     if (!middleRef.current) return;
     setTimeout(() => {
       middleRef.current.scrollTop = middleRef.current.scrollHeight;
-    }, 40);
+    }, 30);
   }, [messages]);
 
+  // cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      for (const id of Object.values(timersRef.current)) {
+        clearInterval(id);
+      }
+      timersRef.current = {};
+    };
+  }, []);
+
   const addMessage = (m) =>
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), ...m }
-    ]);
+    setMessages((prev) => [...prev, { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), ...m }]);
 
-  // Matching — first exact question, then qa keywords, then category keywords
-  function matchFAQ(userText) {
-    const t = (userText || "").trim().toLowerCase();
+  // matching logic
+  function matchFAQ(text) {
+    const t = (text || "").trim().toLowerCase();
     if (!t) return null;
-
-    // 1) exact question equality
-    for (const e of faqFlat) {
-      if (e.question.toLowerCase() === t) return e;
-    }
-
-    // 2) keyword match inside each entry keyword array
+    for (const e of faqFlat) if (e.question.toLowerCase() === t) return e;
     for (const e of faqFlat) {
       if (!e.keywords || e.keywords.length === 0) continue;
       for (const kw of e.keywords) {
@@ -127,60 +125,74 @@ export default function ChatAssistant() {
         if (t.includes(kw)) return e;
       }
     }
-
-    // 3) any question that includes the user's text (loose contains)
-    for (const e of faqFlat) {
-      if (e.question.toLowerCase().includes(t)) return e;
-    }
-
+    for (const e of faqFlat) if (e.question.toLowerCase().includes(t)) return e;
     return null;
   }
 
-  // show assistant "typing" then add reply
-  function assistantReply(text) {
+  // typewriter effect: create an assistant message with empty text and append characters
+  function typewriterReply(fullText) {
     setIsTyping(true);
-    const delay = Math.min(1200 + text.length * 8, 2200);
+    // create placeholder message
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    setMessages((prev) => [...prev, { id, role: "assistant", text: "" }]);
+
+    // small initial delay to feel human
+    const initialDelay = Math.min(700 + Math.min(fullText.length * 6, 800), 1600);
     setTimeout(() => {
-      setIsTyping(false);
-      addMessage({ role: "assistant", text });
-      setShowSuggestions(false);
-    }, delay);
+      let i = 0;
+      const interval = setInterval(() => {
+        i += 1;
+        setMessages((prev) =>
+          prev.map((m) => (m.id === id ? { ...m, text: fullText.slice(0, i) } : m))
+        );
+        // finished
+        if (i >= fullText.length) {
+          clearInterval(interval);
+          delete timersRef.current[id];
+          setIsTyping(false);
+        }
+      }, TYPE_SPEED);
+      timersRef.current[id] = interval;
+    }, initialDelay);
   }
 
+  // high-level handler for incoming user question text
   function handleQuestion(text) {
     if (!text || !text.trim()) return;
     const t = text.trim();
     addMessage({ role: "user", text: t });
     setInput("");
 
-    // 1) try faq match
     const hit = matchFAQ(t);
     if (hit) {
-      const answer = hit.answer || "Here's what I found.";
-      const reply = hit.source ? `${answer}\n\nSource: ${hit.source}` : answer;
-      assistantReply(reply);
+      const reply = hit.source ? `${hit.answer}\n\nSource: ${hit.source}` : hit.answer;
+      typewriterReply(reply);
+      setShowSuggestions(false);
       return;
     }
 
-    // 2) try to find by suggestion key (map suggestions to faq by keyword)
+    // check suggestions
     const sMatch = SUGGESTIONS.find(s => s.text.toLowerCase() === t.toLowerCase() || s.key === t.toLowerCase());
     if (sMatch) {
-      // try to find a faq that lists the suggestion key in keywords
+      // try to find FAQ by suggestion key
       const byKey = faqFlat.find(f => f.keywords && f.keywords.includes(sMatch.key));
       if (byKey) {
         const reply = byKey.source ? `${byKey.answer}\n\nSource: ${byKey.source}` : byKey.answer;
-        assistantReply(reply);
+        typewriterReply(reply);
+        setShowSuggestions(false);
         return;
       }
-      // else fallback to canned suggestion answer
-      assistantReply(sMatch.answer);
+      // fallback to canned answer
+      typewriterReply(sMatch.answer);
+      setShowSuggestions(false);
       return;
     }
 
-    // 3) fallback honest message
-    assistantReply(
+    // final fallback
+    typewriterReply(
       "I don't have that exact information in my sources. Would you like me to show related projects or common topics?"
     );
+    setShowSuggestions(false);
   }
 
   function onSubmit(e) {
@@ -212,6 +224,7 @@ export default function ChatAssistant() {
                 padding: "12px 16px",
                 borderRadius: 12,
                 maxWidth: "78%",
+                whiteSpace: "pre-wrap",
                 boxShadow: m.role === "assistant" ? "0 10px 30px rgba(2,6,23,0.03)" : "none"
               }}>
                 {m.text}
@@ -228,7 +241,7 @@ export default function ChatAssistant() {
           )}
         </div>
 
-        {/* bottom spacing so messages don't hide behind footer */}
+        {/* spacer so messages never hide behind footer */}
         <div style={{ height: BRAND.footerGap + 90 }} />
       </div>
 
