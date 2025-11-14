@@ -1,30 +1,266 @@
 [
   {
-    "id": "mobile-checkout",
-    "question": "Show me your best mobile project",
-    "keywords": ["mobile project", "best mobile", "mobile checkout", "mobile case study", "mobile project"],
-    "answer": "My top mobile project is the Mobile Checkout Redesign — I simplified the checkout flow, reduced steps by 30%, and improved conversion through microcopy and clearer affordances. View it: https://pragatisharma.in/mobile-checkout",
-    "source": "https://pragatisharma.in/mobile-checkout"
+    "id": "background-profile",
+    "title": "Background & Profile",
+    "keywords": [
+      "about pragati",
+      "who are you",
+      "experience",
+      "background",
+      "years of experience",
+      "product designer",
+      "what do you do",
+      "what industries",
+      "profile summary"
+    ],
+    "qa": [
+      {
+        "q": "What do you do exactly?",
+        "a": "I’m a Product & UX Designer who focuses on simplifying complex product problems into intuitive flows and interfaces. I work across the full cycle—understanding the problem, structuring flows, designing UI, validating with users, and handing off to engineering. My strength is converting unclear requirements into structured, build-ready solutions."
+      },
+      {
+        "q": "How many years of experience do you have?",
+        "a": "I have around 5 years of experience across B2C, B2B, SaaS and enterprise products. My work spans mobile apps, dashboards, redesigns, and design systems."
+      },
+      {
+        "q": "Which industries have you worked in?",
+        "a": "Telecom, Fintech, Travel, Consumer Apps, Insights Platforms, and Enterprise SaaS. This range helps me design for both everyday consumers and specialized power users."
+      },
+      {
+        "q": "What products have you worked on?",
+        "a": "Consumer apps, telecom purchase flows, onboarding journeys, dashboards, fintech tools, and enterprise systems. My strengths lie in clarity-heavy experiences."
+      }
+    ]
   },
+
   {
-    "id": "research-approach",
-    "question": "How do you approach research?",
-    "keywords": ["research", "approach research", "user research", "research process"],
-    "answer": "I start with stakeholder interviews, form assumptions, then run 2–3 rapid prototype tests to validate direction. I prioritise hypotheses by business impact and user effort.",
-    "source": ""
+    "id": "projects-keywork",
+    "title": "Projects & Key Work",
+    "keywords": [
+      "case studies",
+      "projects",
+      "portfolio",
+      "work examples",
+      "verizon",
+      "pdp",
+      "pic dashboard",
+      "cc app",
+      "cashfree",
+      "southwest"
+    ],
+    "qa": [
+      {
+        "q": "Which project shows your strongest problem-solving?",
+        "a": "The PIC Dashboard. It required reorganizing dense, analytical content into a simple insights-driven model. It shows clarity, system-thinking, information hierarchy and UX depth.",
+        "source": "https://pragatisharma.in/case-study/pic-case-study"
+      },
+      {
+        "q": "What is your most detailed case study?",
+        "a": "The Verizon PDP redesign is my most detailed end-to-end case study. It covers hierarchy cleanup, mobile-first improvements, flow restructuring, and design clarity.",
+        "source": "https://pragatisharma.in/case-study/verizon-pdp"
+      },
+      {
+        "q": "Do you have B2C examples?",
+        "a": "Yes—my CC App onboarding redesign reduced friction by distributing steps contextually across the experience.",
+        "source": "https://pragatisharma.in/case-study/cc-app"
+      },
+      {
+        "q": "Do you have B2B/dashboard examples?",
+        "a": "Yes—PIC Dashboard is my strongest dashboard example. Cashfree dashboard is another example of flow simplification.",
+        "source": "https://www.figma.com/proto/1sVkyUun3i3khfXIoPPRYd/CashFlow_Cashfree-assignment"
+      }
+    ]
   },
+
   {
-    "id": "tools",
-    "question": "Which tools do you use?",
-    "keywords": ["tools", "which tools", "tool stack", "software"],
-    "answer": "I use Figma, FigJam, Protopie for prototyping, Notion for docs, and Maze for remote usability testing.",
-    "source": ""
+    "id": "process-thinking",
+    "title": "Design Process & Thinking",
+    "keywords": [
+      "design process",
+      "how do you work",
+      "problem solving",
+      "ux thinking",
+      "flows",
+      "wireframes",
+      "user research",
+      "handoff"
+    ],
+    "qa": [
+      {
+        "q": "What’s your design process?",
+        "a": "Problem → Flow → Wireframes → Test → UI → QA → Launch. I start with structure, clarify goals, validate assumptions, iterate quickly, and then refine visuals."
+      },
+      {
+        "q": "What’s your approach to problem-framing?",
+        "a": "I break unclear requirements into flows, decision points, and assumptions. Once the problem is structured, the design becomes straightforward."
+      },
+      {
+        "q": "Do you work on UX and UI both?",
+        "a": "Yes—flows, logic, structure, wireframes, UI, interactions, copywriting, and handoff. I handle end-to-end product design."
+      }
+    ]
   },
+
   {
-    "id": "about-pragati",
-    "question": "Who is Pragati?",
-    "keywords": ["who is pragati", "about pragati", "about you", "pragati"],
-    "answer": "I'm Pragati Sharma — a Product Designer focused on building thoughtful, scalable product experiences. I work across fintech, telecom and SaaS. (5 years experience).",
-    "source": "https://pragatisharma.in/about"
+    "id": "collaboration",
+    "title": "Collaboration & Teamwork",
+    "keywords": [
+      "collaboration",
+      "working with PMs",
+      "working with devs",
+      "teamwork",
+      "communication",
+      "cross functional"
+    ],
+    "qa": [
+      {
+        "q": "How do you work with PMs?",
+        "a": "Through early alignment on goals, constraints, assumptions, and success metrics. I keep PMs updated frequently to avoid surprises."
+      },
+      {
+        "q": "How do you collaborate with engineers?",
+        "a": "I involve engineers early for feasibility, share flows before UI, and help QA with build validation. I keep files clean and easy to read."
+      },
+      {
+        "q": "How do you communicate design decisions?",
+        "a": "With clear reasoning—what users needed, what problem was solved, and why an approach works. I avoid jargon and use flows & examples."
+      }
+    ]
+  },
+
+  {
+    "id": "b2c-specific",
+    "title": "B2C Product Design",
+    "keywords": [
+      "b2c",
+      "consumer apps",
+      "onboarding",
+      "mobile-first",
+      "verizon pdp"
+    ],
+    "qa": [
+      {
+        "q": "How do you think about mobile design?",
+        "a": "Clarity, thumb reach, minimal friction, and progressive disclosure. I prioritize what users need most and reduce effort wherever possible."
+      },
+      {
+        "q": "Do you work on onboarding flows?",
+        "a": "Yes—I redesigned the CC App onboarding to make it lighter and more contextual, guiding users naturally with minimal friction.",
+        "source": "https://pragatisharma.in/case-study/cc-app"
+      }
+    ]
+  },
+
+  {
+    "id": "b2b-saas",
+    "title": "B2B / SaaS / Dashboards",
+    "keywords": [
+      "b2b",
+      "saas",
+      "dashboards",
+      "data heavy",
+      "enterprise",
+      "pic dashboard"
+    ],
+    "qa": [
+      {
+        "q": "Have you worked on dashboards?",
+        "a": "Yes—PIC Dashboard and Cashfree. These projects required clarity, data simplification, insight-first layouts, and flexible design systems."
+      },
+      {
+        "q": "How do you design for power users?",
+        "a": "Speed, hierarchy, reducing friction, shortcut-friendly layouts, and minimal cognitive load. I reorganize flows so users reach insights in fewer steps."
+      }
+    ]
+  },
+
+  {
+    "id": "design-systems",
+    "title": "Design Systems",
+    "keywords": [
+      "design system",
+      "tokens",
+      "components",
+      "variants",
+      "pic ds"
+    ],
+    "qa": [
+      {
+        "q": "Have you built design systems?",
+        "a": "Yes—the PIC Design System, including tokens, variants, spacing, documentation, and developer alignment.",
+        "source": "https://www.figma.com/design/2E2ygSrFyZpVt3enyP1N7b/Predictive-Insight-Center"
+      },
+      {
+        "q": "What did you learn about design systems?",
+        "a": "If nobody maintains a design system, it dies. I set up processes to ensure components stay updated and consistent across builds."
+      }
+    ]
+  },
+
+  {
+    "id": "research-usability",
+    "title": "Research & Usability",
+    "keywords": [
+      "user research",
+      "usability testing",
+      "interviews",
+      "journey mapping",
+      "personas"
+    ],
+    "qa": [
+      {
+        "q": "Do you do research?",
+        "a": "Yes—light interviews, heuristic reviews, usability tests, and validating assumptions with real users. Research is a tool, not a formality."
+      },
+      {
+        "q": "Do you conduct usability tests?",
+        "a": "Yes—quick prototypes, friction checks, and evaluating clarity. It helps refine flows before development."
+      }
+    ]
+  },
+
+  {
+    "id": "soft-skills",
+    "title": "Soft Skills & Mindset",
+    "keywords": [
+      "team culture",
+      "communication style",
+      "feedback",
+      "work values",
+      "soft skills"
+    ],
+    "qa": [
+      {
+        "q": "What values matter to you?",
+        "a": "Clarity, respect, ownership, open communication, and collaborative problem solving."
+      },
+      {
+        "q": "What kind of teammate are you?",
+        "a": "Supportive, calm, structured, and collaborative. I help teams align and move without chaos."
+      }
+    ]
+  },
+
+  {
+    "id": "career-goals",
+    "title": "Career Goals & Preferences",
+    "keywords": [
+      "future goals",
+      "career",
+      "roles",
+      "remote",
+      "next role",
+      "what are you looking for"
+    ],
+    "qa": [
+      {
+        "q": "What roles are you looking for?",
+        "a": "Product Designer roles where I can own features end-to-end and work closely with engineering and PMs to create impactful experiences."
+      },
+      {
+        "q": "Where do you see yourself in 2–3 years?",
+        "a": "More specialized in data-heavy UX, system design, and leading clarity-driven product decisions."
+      }
+    ]
   }
 ]
