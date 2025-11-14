@@ -1,197 +1,243 @@
 // components/ChatAssistant.jsx
 import { useEffect, useRef, useState } from "react";
-import TypingMessage from "../embed/components/TypingMessage"; // ensure path exists
 
 /* ---------- CONFIG ---------- */
 const BRAND = { blue: "#0f80d9", footerGap: 24 };
+
+/*
+  Each suggestion has a safe fallback `answer` so the chip
+  always shows something even if faq.json doesn't include it.
+*/
 const SUGGESTIONS = [
-  { key: "mobile", text: "Show me your best mobile project", emoji: "📱" },
-  { key: "research", text: "How do you approach research?", emoji: "🔬" },
-  { key: "tools", text: "Which tools do you use?", emoji: "🧰" },
-  { key: "about", text: "Who is Pragati?", emoji: "👋" }
+  {
+    key: "mobile",
+    text: "Show me your best mobile project",
+    emoji: "📱",
+    answer:
+      "My top mobile project is Mobile Checkout Redesign — it simplified the flow and improved conversion. See: https://pragatisharma.in/mobile-checkout"
+  },
+  {
+    key: "research",
+    text: "How do you approach research?",
+    emoji: "🔬",
+    answer:
+      "I start with stakeholder interviews, map assumptions, then run 2–3 rapid tests to validate direction. I prioritise quick learning and iterate."
+  },
+  {
+    key: "tools",
+    text: "Which tools do you use?",
+    emoji: "🧰",
+    answer:
+      "I use Figma for UI & systems, FigJam for whiteboards, basic prototyping in Figma + Framer for demos, and Notion/Loom for documentation and async walkthroughs."
+  },
+  {
+    key: "about",
+    text: "Who is Pragati?",
+    emoji: "👋",
+    answer:
+      "Pragati is a Product & UX Designer (5yrs) focused on simplifying complex flows for B2C & B2B. See portfolio: https://pragatisharma.in"
+  }
 ];
 /* ---------------------------- */
 
+/* Inline typing indicator small component */
+function TypingIndicator() {
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        gap: 6,
+        padding: "8px 12px",
+        background: "#f1f8ff",
+        borderRadius: 12,
+      }}
+      aria-hidden
+    >
+      <div style={{ width: 6, height: 6, borderRadius: 999, background: "#9fc7ff", animation: "pulse 1s infinite" }} />
+      <div style={{ width: 6, height: 6, borderRadius: 999, background: "#9fc7ff", animation: "pulse 1s .2s infinite" }} />
+      <div style={{ width: 6, height: 6, borderRadius: 999, background: "#9fc7ff", animation: "pulse 1s .4s infinite" }} />
+      <style>{`
+        @keyframes pulse {
+          0% { opacity: 0.25; transform: translateY(0); }
+          50% { opacity: 1; transform: translateY(-4px); }
+          100% { opacity: 0.25; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function ChatAssistant() {
-  // core state
   const [faq, setFaq] = useState([]);
-  const [messages, setMessages] = useState([]); // { id, role: "user"|"assistant", loading?, tempText?, text }
+  const [messages, setMessages] = useState([]); // { id, role, text }
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
   const middleRef = useRef(null);
-  const footerRef = useRef(null);
 
-  // load FAQ (if you have /faq.json in public)
   useEffect(() => {
+    // load public/faq.json if present; silent fallback to []
     fetch("/faq.json")
-      .then((r) => r.ok ? r.json() : Promise.reject("no faq"))
+      .then((r) => (r.ok ? r.json() : Promise.reject("no faq")))
       .then((j) => setFaq(j || []))
       .catch(() => setFaq([]));
   }, []);
 
-  // auto-scroll to bottom on messages change
   useEffect(() => {
+    // auto-scroll when messages update
     if (!middleRef.current) return;
-    // small timeout so newly rendered content/typing can measure
+    // slight delay to let DOM layout
     setTimeout(() => {
       middleRef.current.scrollTop = middleRef.current.scrollHeight;
-    }, 30);
+    }, 40);
   }, [messages]);
 
-  // helper: add a raw message object
-  const addMessage = (m) => setMessages((prev) => [...prev, m]);
+  const addMessage = (m) =>
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), ...m }
+    ]);
 
-  // FAQ matcher (exact question -> keywords)
-  function handleFAQ(userText) {
-    const t = (userText || "").toLowerCase().trim();
+  // Basic FAQ matcher (exact question or any keyword)
+  function matchFAQ(text) {
+    const t = (text || "").toLowerCase();
     if (!t) return null;
     // exact question match
-    for (const entry of faq) {
-      if ((entry.question || "").toLowerCase().trim() === t) return entry;
+    for (const e of faq) {
+      if ((e.question || "").toLowerCase() === t) return e;
     }
-    // keywords match
-    for (const entry of faq) {
-      if (!entry.keywords) continue;
-      for (const kw of entry.keywords) {
-        if (t.includes(kw.toLowerCase())) return entry;
+    // keyword match
+    for (const e of faq) {
+      if (!e.keywords) continue;
+      for (const kw of e.keywords) {
+        if (t.includes(kw.toLowerCase())) return e;
       }
     }
     return null;
   }
 
-  // Core: send assistant reply with typing animation
-  function sendAssistantReply(finalText, { instantForShort = true } = {}) {
-    const id = `assistant-${Date.now()}`;
-    // initial placeholder message (loading true will render TypingMessage)
-    addMessage({ id, role: "assistant", loading: true, tempText: finalText, text: "" });
-    // TypingMessage onComplete will flip loading -> false and move to final text.
-    // No extra timers required here; see render loop for onComplete handler.
+  // Make assistant "type" then add message (simulated latency)
+  function assistantReply(text) {
+    setIsTyping(true);
+    // choose simulated delay based on message length
+    const delay = Math.min(1200 + text.length * 8, 2200);
+    setTimeout(() => {
+      setIsTyping(false);
+      addMessage({ role: "assistant", text });
+      setShowSuggestions(false);
+    }, delay);
   }
 
-  // Submit handler: check FAQ first then fallback
+  // Called for user submit or suggestion click
+  function handleQuestion(text) {
+    if (!text || !text.trim()) return;
+    const t = text.trim();
+    addMessage({ role: "user", text: t });
+    setInput("");
+
+    // 1) check FAQ
+    const match = matchFAQ(t);
+    if (match) {
+      // prefer match.answer; include source if available
+      const answer = match.answer || "Here's what I found.";
+      assistantReply(answer + (match.source ? `\n\nSource: ${match.source}` : ""));
+      return;
+    }
+
+    // 2) check suggestions fallback (safe, local canned answers)
+    const s = SUGGESTIONS.find((x) => x.text.toLowerCase() === t.toLowerCase());
+    if (s && s.answer) {
+      assistantReply(s.answer);
+      return;
+    }
+
+    // 3) fallback honest message
+    assistantReply(
+      "I don't have that exact information in my sources. Would you like me to show related projects or common topics?"
+    );
+  }
+
   function onSubmit(e) {
     e?.preventDefault();
-    const text = (input || "").trim();
-    if (!text) return;
-    // add user message instantly
-    addMessage({ id: `user-${Date.now()}`, role: "user", text });
-    setInput("");
-    setShowSuggestions(false);
-
-    // FAQ hit?
-    const hit = handleFAQ(text);
-    if (hit) {
-      // respond using curated answer (no hallucination)
-      // show typing if answer length > 60 (feel), else show instantly via sendAssistantReply + instant short bypass
-      if ((hit.answer || "").length > 60) {
-        sendAssistantReply(hit.answer);
-      } else {
-        addMessage({ id: `assistant-${Date.now()}`, role: "assistant", loading: false, text: hit.answer });
-      }
-      if (hit.source) {
-        // optionally show source as a separate assistant message (instant)
-        addMessage({ id: `assistant-src-${Date.now()}`, role: "assistant", loading: false, text: `Source: ${hit.source}` });
-      }
-      return;
-    }
-
-    // no FAQ match -> polite transparent fallback (use typing animation)
-    const fallback = "I don't have that exact info in my sources. Would you like me to show related projects, common topics, or let me try to search for more details?";
-    sendAssistantReply(fallback);
+    handleQuestion(input);
   }
 
-  // when a suggestion chip is clicked
-  function handleSuggestion(s) {
-    // behave like a user typed it
-    addMessage({ id: `user-${Date.now()}`, role: "user", text: s.text });
-    setShowSuggestions(false);
-
-    const hit = handleFAQ(s.text);
-    if (hit) {
-      if ((hit.answer || "").length > 60) sendAssistantReply(hit.answer);
-      else addMessage({ id: `assistant-${Date.now()}`, role: "assistant", loading: false, text: hit.answer });
-      if (hit.source) addMessage({ id: `assistant-src-${Date.now()}`, role: "assistant", loading: false, text: `Source: ${hit.source}` });
-      return;
-    }
-    // fallback short reply
-    sendAssistantReply("I don't have that exact information in my sources. Want to see related projects instead?");
+  function onSuggestionClick(s) {
+    // Use the suggestion text, but prefer FAQ match first
+    handleQuestion(s.text);
   }
 
-  // utility: convert messages for rendering
-  // (render mapping below includes TypingMessage usage)
   return (
-    <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#fbfeff", borderRadius: 12 }}>
-      {/* Scrollable middle */}
+    <div
+      style={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        background: "#fbfeff"
+      }}
+    >
+      {/* scrollable middle */}
       <div ref={middleRef} style={{ flex: 1, overflowY: "auto", padding: 28 }}>
-        {/* Header / hero — this is part of conversation and will scroll away */}
+        {/* header (hero, not sticky) — will scroll away like ChatGPT */}
         <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 18 }}>
-          <div style={{
-            width: 72,
-            height: 72,
-            borderRadius: 12,
-            background: `linear-gradient(135deg, ${BRAND.blue}, #a6d9ff)`,
-            boxShadow: "0 10px 30px rgba(15,34,64,0.06)"
-          }} />
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 12,
+              background: `linear-gradient(135deg, ${BRAND.blue}, #a6d9ff)`
+            }}
+          />
           <div>
-            <h2 style={{ color: BRAND.blue, margin: 0, fontSize: 32, fontFamily: "'PPPangaia', Georgia, serif" }}>
+            <h2 style={{ color: BRAND.blue, margin: 0, fontSize: 36, fontWeight: 700 }}>
               Hey there! Can I help you with anything?
             </h2>
             <div style={{ marginTop: 8, color: "#6b7280" }}>Ready to assist you with anything you need.</div>
           </div>
         </div>
 
-        {/* Conversation messages area */}
+        {/* chat messages */}
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {messages.map((m) => {
-            const isUser = m.role === "user";
-            const alignStyle = { display: "flex", justifyContent: isUser ? "flex-end" : "flex-start" };
-            const bubbleStyle = {
-              background: isUser ? BRAND.blue : "#f7fbff",
-              color: isUser ? "#fff" : "#061425",
-              padding: "12px 16px",
-              borderRadius: 12,
-              maxWidth: "78%",
-              boxShadow: isUser ? "0 8px 20px rgba(15,128,217,0.18)" : "none"
-            };
-
-            // assistant loading state -> render TypingMessage with onComplete that flips the message
-            if (m.role === "assistant" && m.loading) {
-              return (
-                <div key={m.id} style={alignStyle}>
-                  <div style={{ maxWidth: "78%" }}>
-                    <TypingMessage
-                      text={m.tempText || ""}
-                      charsPerSecond={100}
-                      onComplete={() => {
-                        // flip message to final text
-                        setMessages((prev) => prev.map(pm => {
-                          if (pm.id === m.id) return { ...pm, loading: false, text: pm.tempText };
-                          return pm;
-                        }));
-                      }}
-                      instant={(m.tempText || "").length < 80}
-                    />
-                  </div>
-                </div>
-              );
-            }
-
-            // plain message (user or assistant final)
-            return (
-              <div key={m.id} style={alignStyle}>
-                <div style={bubbleStyle}>
-                  {m.text}
-                </div>
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              style={{
+                display: "flex",
+                justifyContent: m.role === "user" ? "flex-end" : "flex-start"
+              }}
+            >
+              <div
+                style={{
+                  background: m.role === "user" ? BRAND.blue : "#f7fbff",
+                  color: m.role === "user" ? "#fff" : "#061425",
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  maxWidth: "78%",
+                  boxShadow: m.role === "assistant" ? "0 10px 30px rgba(2,6,23,0.03)" : "none"
+                }}
+              >
+                {m.text}
               </div>
-            );
-          })}
+            </div>
+          ))}
+
+          {/* typing indicator shows as assistant bubble */}
+          {isTyping && (
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <div style={{ padding: "8px 12px", borderRadius: 12, background: "#f1f8ff" }}>
+                <TypingIndicator />
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* give some bottom padding so content doesn't hide behind footer */}
+        <div style={{ height: BRAND.footerGap + 90 }} />
       </div>
 
-      {/* Padded sticky footer box — not position:fixed (keeps it inside modal) */}
-      <div style={{ padding: BRAND.footerGap }}>
+      {/* footer - sticky like ChatGPT input (but here as end-of-modal sticky) */}
+      <div style={{ padding: BRAND.footerGap, background: "transparent" }}>
         <div
-          ref={footerRef}
           style={{
             margin: `0 ${BRAND.footerGap}px`,
             background: "#fff",
@@ -200,30 +246,29 @@ export default function ChatAssistant() {
             boxShadow: "0 20px 60px rgba(2,6,23,0.06)"
           }}
         >
-          {/* Suggestions */}
           {showSuggestions && (
             <div style={{ display: "flex", gap: 12, overflowX: "auto", marginBottom: 12 }}>
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s.key}
-                  onClick={() => handleSuggestion(s)}
+                  onClick={() => onSuggestionClick(s)}
                   style={{
                     padding: "10px 14px",
                     borderRadius: 14,
                     border: "1px solid #f3f6fa",
                     background: "#fff",
-                    whiteSpace: "nowrap",
-                    cursor: "pointer"
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8
                   }}
                 >
-                  <span style={{ marginRight: 8 }}>{s.emoji}</span>
-                  {s.text}
+                  <span style={{ fontSize: 16 }}>{s.emoji}</span>
+                  <span style={{ whiteSpace: "nowrap" }}>{s.text}</span>
                 </button>
               ))}
             </div>
           )}
 
-          {/* Input row */}
           <form onSubmit={onSubmit} style={{ display: "flex", gap: 12, alignItems: "center" }}>
             <input
               placeholder="Ask anything you need"
@@ -234,9 +279,7 @@ export default function ChatAssistant() {
                 height: 48,
                 padding: "12px 16px",
                 borderRadius: 12,
-                border: "1.5px solid rgba(15,128,217,0.12)",
-                outline: "none",
-                fontSize: 15
+                border: "1.5px solid rgba(15,128,217,0.12)"
               }}
             />
             <button
@@ -247,9 +290,7 @@ export default function ChatAssistant() {
                 borderRadius: 12,
                 background: BRAND.blue,
                 color: "#fff",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: 700
+                border: "none"
               }}
             >
               Send
