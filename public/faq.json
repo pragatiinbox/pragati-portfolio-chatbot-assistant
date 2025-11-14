@@ -16,19 +16,27 @@
     "qa": [
       {
         "q": "What do you do exactly?",
-        "a": "I’m a Product & UX Designer who focuses on simplifying complex product problems into intuitive flows and interfaces. I work across the full cycle—understanding the problem, structuring flows, designing UI, validating with users, and handing off to engineering. My strength is converting unclear requirements into structured, build-ready solutions."
+        "a": "I’m a Product & UX Designer who simplifies complex product problems into clear, intuitive user flows and build-ready interfaces. I work across the full design cycle—problem framing, flow mapping, prototyping, visual design, validation, and handoff. My focus is clarity: turning messy requirements into structured, user-centered solutions."
       },
       {
         "q": "How many years of experience do you have?",
-        "a": "I have around 5 years of experience across B2C, B2B, SaaS and enterprise products. My work spans mobile apps, dashboards, redesigns, and design systems."
+        "a": "I have around 5 years of product design experience across B2C, B2B, SaaS, and enterprise products. I’ve led mobile apps, PDPs, onboarding flows, redesigns, and large dashboards."
       },
       {
         "q": "Which industries have you worked in?",
-        "a": "Telecom, Fintech, Travel, Consumer Apps, Insights Platforms, and Enterprise SaaS. This range helps me design for both everyday consumers and specialized power users."
+        "a": "I’ve designed in Telecom, Fintech, Travel, Consumer Apps, Insights Platforms, and Enterprise SaaS—so I can solve both mainstream consumer problems and complex data-driven enterprise needs."
       },
       {
         "q": "What products have you worked on?",
-        "a": "Consumer apps, telecom purchase flows, onboarding journeys, dashboards, fintech tools, and enterprise systems. My strengths lie in clarity-heavy experiences."
+        "a": "My work includes consumer apps, telecom purchase flows and PDPs, onboarding flows, payment and fintech tools, and enterprise dashboards focused on insight clarity."
+      },
+      {
+        "q": "Who have you worked with / brands?",
+        "a": "I’ve worked with brands and agencies including Verizon, Southwest (prototype work), Deloitte, Takeda Pharmaceuticals, Texas Capital Bank, and Cvent across projects ranging from PDP redesigns to dashboards and onboarding."
+      },
+      {
+        "q": "Tell me about your experience",
+        "a": "I’ve spent ~5 years designing across consumer and enterprise products. My approach blends research, prototyping, and pragmatic UI so products ship faster and users complete tasks more reliably. I’ve led work at agencies and in-house teams and shipped measurable improvements in conversion and clarity."
       }
     ]
   },
@@ -51,23 +59,27 @@
     "qa": [
       {
         "q": "Which project shows your strongest problem-solving?",
-        "a": "The PIC Dashboard. It required reorganizing dense, analytical content into a simple insights-driven model. It shows clarity, system-thinking, information hierarchy and UX depth.",
+        "a": "The PIC Dashboard — it required reorganizing dense analytical content into an insight-first model that made it easier for power users to act on data.",
         "source": "https://pragatisharma.in/case-study/pic-case-study"
       },
       {
         "q": "What is your most detailed case study?",
-        "a": "The Verizon PDP redesign is my most detailed end-to-end case study. It covers hierarchy cleanup, mobile-first improvements, flow restructuring, and design clarity.",
+        "a": "The Verizon PDP redesign is my most detailed end-to-end case. I improved hierarchy, mobile flow, and content clarity which reduced friction on the purchase journey.",
         "source": "https://pragatisharma.in/case-study/verizon-pdp"
       },
       {
         "q": "Do you have B2C examples?",
-        "a": "Yes—my CC App onboarding redesign reduced friction by distributing steps contextually across the experience.",
+        "a": "Yes — the CC App onboarding redesign reduced early drop-off by making onboarding progressive and less intrusive.",
         "source": "https://pragatisharma.in/case-study/cc-app"
       },
       {
         "q": "Do you have B2B/dashboard examples?",
-        "a": "Yes—PIC Dashboard is my strongest dashboard example. Cashfree dashboard is another example of flow simplification.",
+        "a": "Yes — PIC Dashboard and a Cashfree assignment show how I simplify complex data and build reusable patterns for enterprise contexts.",
         "source": "https://www.figma.com/proto/1sVkyUun3i3khfXIoPPRYd/CashFlow_Cashfree-assignment"
+      },
+      {
+        "q": "What’s your most impactful project?",
+        "a": "Verizon PDP — it had measurable impact on mobile conversions by clarifying CTAs, product hierarchy, and the checkout path."
       }
     ]
   },
@@ -88,15 +100,19 @@
     "qa": [
       {
         "q": "What’s your design process?",
-        "a": "Problem → Flow → Wireframes → Test → UI → QA → Launch. I start with structure, clarify goals, validate assumptions, iterate quickly, and then refine visuals."
+        "a": "Problem → Flow → Wireframes → Test → UI → QA → Launch. I start with structure, validate early, iterate quickly, then refine visuals and handoff."
       },
       {
         "q": "What’s your approach to problem-framing?",
-        "a": "I break unclear requirements into flows, decision points, and assumptions. Once the problem is structured, the design becomes straightforward."
+        "a": "I break unclear requirements into flows, decision points and edge cases. Once the problem is structured, design decisions become clearer and faster."
       },
       {
         "q": "Do you work on UX and UI both?",
-        "a": "Yes—flows, logic, structure, wireframes, UI, interactions, copywriting, and handoff. I handle end-to-end product design."
+        "a": "Yes — I handle flows, UX copy, prototypes, UI, and the handoff to engineering. I like owning the problem end-to-end."
+      },
+      {
+        "q": "How do you measure success?",
+        "a": "By metrics tied to the goal: drop-offs, conversion, time-to-task, and user qualitative feedback. If a change reduces friction or improves a success metric, it’s working."
       }
     ]
   },
@@ -115,15 +131,15 @@
     "qa": [
       {
         "q": "How do you work with PMs?",
-        "a": "Through early alignment on goals, constraints, assumptions, and success metrics. I keep PMs updated frequently to avoid surprises."
+        "a": "I align early on goals, constraints and success metrics. Frequent short updates and clear design notes avoid surprises and help fast decisions."
       },
       {
         "q": "How do you collaborate with engineers?",
-        "a": "I involve engineers early for feasibility, share flows before UI, and help QA with build validation. I keep files clean and easy to read."
+        "a": "I involve engineers early for feasibility, share flows before UI, and provide clear specs and variants. I help during QA to ensure the build matches intent."
       },
       {
         "q": "How do you communicate design decisions?",
-        "a": "With clear reasoning—what users needed, what problem was solved, and why an approach works. I avoid jargon and use flows & examples."
+        "a": "With clear rationale: user need → constraint → decision → expected outcome. I use visuals and short notes rather than long documents."
       }
     ]
   },
@@ -136,16 +152,17 @@
       "consumer apps",
       "onboarding",
       "mobile-first",
-      "verizon pdp"
+      "verizon pdp",
+      "conversion"
     ],
     "qa": [
       {
         "q": "How do you think about mobile design?",
-        "a": "Clarity, thumb reach, minimal friction, and progressive disclosure. I prioritize what users need most and reduce effort wherever possible."
+        "a": "Prioritise clarity, thumb reach, progressive disclosure and speed. Small screens force prioritisation — show what matters first and hide what’s secondary."
       },
       {
         "q": "Do you work on onboarding flows?",
-        "a": "Yes—I redesigned the CC App onboarding to make it lighter and more contextual, guiding users naturally with minimal friction.",
+        "a": "Yes — I prefer lightweight, contextual onboarding that reduces friction and nudges users progressively rather than forcing long upfront tasks.",
         "source": "https://pragatisharma.in/case-study/cc-app"
       }
     ]
@@ -160,16 +177,17 @@
       "dashboards",
       "data heavy",
       "enterprise",
-      "pic dashboard"
+      "pic dashboard",
+      "power users"
     ],
     "qa": [
       {
         "q": "Have you worked on dashboards?",
-        "a": "Yes—PIC Dashboard and Cashfree. These projects required clarity, data simplification, insight-first layouts, and flexible design systems."
+        "a": "Yes — PIC Dashboard and Cashfree examples show my approach: insight-first layout, progressive drill-downs, and components that scale across roles."
       },
       {
         "q": "How do you design for power users?",
-        "a": "Speed, hierarchy, reducing friction, shortcut-friendly layouts, and minimal cognitive load. I reorganize flows so users reach insights in fewer steps."
+        "a": "Focus on speed and hierarchy: keyboard/shortcut paths, compact density options, and clear information architecture so expert tasks are fast."
       }
     ]
   },
@@ -182,17 +200,18 @@
       "tokens",
       "components",
       "variants",
-      "pic ds"
+      "pic ds",
+      "documentation"
     ],
     "qa": [
       {
         "q": "Have you built design systems?",
-        "a": "Yes—the PIC Design System, including tokens, variants, spacing, documentation, and developer alignment.",
+        "a": "Yes — I built and maintained the PIC Design System: tokens, components, variants and docs to keep design consistent and scalable.",
         "source": "https://www.figma.com/design/2E2ygSrFyZpVt3enyP1N7b/Predictive-Insight-Center"
       },
       {
         "q": "What did you learn about design systems?",
-        "a": "If nobody maintains a design system, it dies. I set up processes to ensure components stay updated and consistent across builds."
+        "a": "If nobody maintains it, it degrades quickly. Governance, lightweight update processes, and clear ownership keep systems healthy."
       }
     ]
   },
@@ -205,16 +224,17 @@
       "usability testing",
       "interviews",
       "journey mapping",
-      "personas"
+      "personas",
+      "validation"
     ],
     "qa": [
       {
         "q": "Do you do research?",
-        "a": "Yes—light interviews, heuristic reviews, usability tests, and validating assumptions with real users. Research is a tool, not a formality."
+        "a": "Yes — I run quick interviews, usability tests and heuristic reviews to validate assumptions. Research is a practical tool to reduce risk, not a checkbox."
       },
       {
         "q": "Do you conduct usability tests?",
-        "a": "Yes—quick prototypes, friction checks, and evaluating clarity. It helps refine flows before development."
+        "a": "Yes — I use lightweight prototypes for short tests to catch major friction before building."
       }
     ]
   },
@@ -232,11 +252,11 @@
     "qa": [
       {
         "q": "What values matter to you?",
-        "a": "Clarity, respect, ownership, open communication, and collaborative problem solving."
+        "a": "Clarity, respect, ownership, and open collaboration. I value pragmatic solutions and clear explanations over cleverness for its own sake."
       },
       {
         "q": "What kind of teammate are you?",
-        "a": "Supportive, calm, structured, and collaborative. I help teams align and move without chaos."
+        "a": "Supportive, calm and collaborative — I aim to reduce ambiguity for the team and help others deliver confidently."
       }
     ]
   },
@@ -255,11 +275,53 @@
     "qa": [
       {
         "q": "What roles are you looking for?",
-        "a": "Product Designer roles where I can own features end-to-end and work closely with engineering and PMs to create impactful experiences."
+        "a": "Product Designer roles where I can own features end-to-end, work with PMs/engineers, and solve meaningful product problems in B2C or B2B."
       },
       {
         "q": "Where do you see yourself in 2–3 years?",
-        "a": "More specialized in data-heavy UX, system design, and leading clarity-driven product decisions."
+        "a": "I want to specialise more in data visualisation, complex flows and leading UX decisions on products with large user impact."
+      }
+    ]
+  },
+
+  {
+    "id": "faq-suggestions",
+    "title": "Suggestion chip canonical answers",
+    "keywords": [
+      "suggestions",
+      "chips",
+      "quick questions",
+      "suggested queries"
+    ],
+    "qa": [
+      {
+        "q": "Show me your best mobile project",
+        "a": "My solid mobile work includes the Verizon PDP redesign — I restructured content and simplified the mobile purchase journey to improve clarity and conversions. See the case study for details.",
+        "source": "https://pragatisharma.in/case-study/verizon-pdp"
+      },
+      {
+        "q": "How do you approach research?",
+        "a": "I start with stakeholder alignment, run quick user interviews to validate assumptions, then prototype and test. Research is iterative and focused on reducing the riskiest unknowns early."
+      },
+      {
+        "q": "Which tools do you use?",
+        "a": "I use Figma for design, FigJam/Miro for workshops, Loom for walkthroughs, and Notion for lightweight docs. I collaborate with devs using Storybook or similar when available."
+      },
+      {
+        "q": "Who is Pragati?",
+        "a": "I’m Pragati — a product designer who cares about clarity and measurable impact. I enjoy turning messy requirements into clean, usable experiences and collaborating closely with PMs and engineers."
+      },
+      {
+        "q": "What am I currently working on?",
+        "a": "Currently I’m focused on a Verizon-related PDP redesign and refining a design system for dashboard experiences—balancing clarity with scalable components."
+      },
+      {
+        "q": "What matters to you when designing?",
+        "a": "Clarity, user goals and measurable outcomes. I prioritise reducing cognitive load, making decisions obvious, and shipping testable changes that move metrics."
+      },
+      {
+        "q": "What skills do you bring?",
+        "a": "Flow mapping, prototyping, UI systems, UX copy, cross-functional collaboration, and practical usability testing. I pair research with pragmatic UI to deliver improvements quickly."
       }
     ]
   }
